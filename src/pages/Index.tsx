@@ -267,7 +267,7 @@ export default function Index() {
               </div>
               <div className="flex items-center gap-2 text-xs p-2 rounded-lg bg-destructive/5">
                 <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                <span>Servidor API con alta latencia (>2s)</span>
+                <span>Servidor API con alta latencia (&gt;2s)</span>
               </div>
             </div>
           </div>

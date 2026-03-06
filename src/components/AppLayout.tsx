@@ -17,7 +17,7 @@ export function AppLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 p-6 overflow-auto asteroid-grid">
+          <main className="flex-1 p-6 overflow-auto bg-background">
             <Outlet />
           </main>
         </div>

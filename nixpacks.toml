@@ -1,0 +1,20 @@
+# Nixpacks configuration for EasyPanel deployment - PAMI
+
+[phases.setup]
+nixPkgs = [
+  "nodejs_22"
+]
+
+[phases.install]
+cmds = [
+  "npm ci"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
+
+[start]
+# Usa el servidor de preview de Vite escuchando en el puerto proporcionado por la plataforma
+cmd = "PORT=${PORT:-8080} npm run preview -- --host 0.0.0.0 --port $PORT"

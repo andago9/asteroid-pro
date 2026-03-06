@@ -1,6 +1,15 @@
-import { CheckSquare, Plus, Filter, Zap } from "lucide-react";
+import { CheckSquare, Plus, Filter, Zap, CalendarIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 type TaskStatus = "Pendiente" | "En progreso" | "En revisión" | "Completada";
 
@@ -8,39 +17,64 @@ interface Task {
   id: string;
   name: string;
   assignee: string;
-  priority: "Crítica" | "Alta" | "Media" | "Baja";
   status: TaskStatus;
+  project: string;
   dueDate: string;
   points: number;
 }
 
 const mockTasks: Task[] = [
-  { id: "1", name: "Diseño landing page", assignee: "Ana G.", priority: "Alta", status: "En progreso", dueDate: "2026-03-10", points: 50 },
-  { id: "2", name: "API integración pagos", assignee: "Carlos M.", priority: "Crítica", status: "Pendiente", dueDate: "2026-03-08", points: 100 },
-  { id: "3", name: "Review UX dashboard", assignee: "María L.", priority: "Media", status: "En revisión", dueDate: "2026-03-12", points: 30 },
-  { id: "4", name: "Deploy producción v2.1", assignee: "Jorge R.", priority: "Alta", status: "Pendiente", dueDate: "2026-03-09", points: 80 },
-  { id: "5", name: "Documentación técnica", assignee: "Ana G.", priority: "Baja", status: "En progreso", dueDate: "2026-03-15", points: 20 },
-  { id: "6", name: "Tests unitarios módulo auth", assignee: "Carlos M.", priority: "Media", status: "Completada", dueDate: "2026-03-05", points: 40 },
-  { id: "7", name: "Optimización queries DB", assignee: "Jorge R.", priority: "Alta", status: "Pendiente", dueDate: "2026-03-11", points: 60 },
-  { id: "8", name: "Diseño sistema de iconos", assignee: "María L.", priority: "Baja", status: "Completada", dueDate: "2026-03-04", points: 25 },
+  { id: "1", name: "Diseño landing page", assignee: "Ana G.", status: "En progreso", project: "Web Corporativa", dueDate: "2026-03-10", points: 50 },
+  { id: "2", name: "API integración pagos", assignee: "Carlos M.", status: "Pendiente", project: "E-Commerce", dueDate: "2026-03-08", points: 100 },
+  { id: "3", name: "Review UX dashboard", assignee: "María L.", status: "En revisión", project: "Dashboard PAMI", dueDate: "2026-03-12", points: 30 },
+  { id: "4", name: "Deploy producción v2.1", assignee: "Jorge R.", status: "Pendiente", project: "Infraestructura", dueDate: "2026-03-09", points: 80 },
+  { id: "5", name: "Documentación técnica", assignee: "Ana G.", status: "En progreso", project: "Dashboard PAMI", dueDate: "2026-03-15", points: 20 },
+  { id: "6", name: "Tests unitarios módulo auth", assignee: "Carlos M.", status: "Completada", project: "E-Commerce", dueDate: "2026-03-05", points: 40 },
+  { id: "7", name: "Optimización queries DB", assignee: "Jorge R.", status: "Pendiente", project: "Infraestructura", dueDate: "2026-03-11", points: 60 },
+  { id: "8", name: "Diseño sistema de iconos", assignee: "María L.", status: "Completada", project: "Web Corporativa", dueDate: "2026-03-04", points: 25 },
 ];
 
-const columns: { status: TaskStatus; color: string }[] = [
-  { status: "Pendiente", color: "border-warning/50" },
-  { status: "En progreso", color: "border-info/50" },
-  { status: "En revisión", color: "border-secondary/50" },
-  { status: "Completada", color: "border-success/50" },
+const columns: { status: TaskStatus; color: string; dotColor: string }[] = [
+  { status: "Pendiente", color: "border-muted-foreground/50", dotColor: "bg-muted-foreground" },
+  { status: "En progreso", color: "border-info/50", dotColor: "bg-info" },
+  { status: "En revisión", color: "border-warning/50", dotColor: "bg-warning" },
+  { status: "Completada", color: "border-success/50", dotColor: "bg-success" },
 ];
 
-const priorityDot: Record<string, string> = {
-  Crítica: "bg-destructive",
-  Alta: "bg-warning",
-  Media: "bg-info",
-  Baja: "bg-muted-foreground",
+const statusDot: Record<TaskStatus, string> = {
+  Pendiente: "bg-muted-foreground",
+  "En progreso": "bg-info",
+  "En revisión": "bg-warning",
+  Completada: "bg-success",
 };
 
 export default function Tareas() {
-  const [tasks] = useState(mockTasks);
+  const [tasks, setTasks] = useState(mockTasks);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newTask, setNewTask] = useState({
+    name: "",
+    status: "Pendiente" as TaskStatus,
+    assignee: "",
+    project: "",
+    dueDate: undefined as Date | undefined,
+    points: 10,
+  });
+
+  const handleCreate = () => {
+    if (!newTask.name.trim()) return;
+    const task: Task = {
+      id: String(Date.now()),
+      name: newTask.name,
+      status: newTask.status,
+      assignee: newTask.assignee || "Sin asignar",
+      project: newTask.project || "Sin proyecto",
+      dueDate: newTask.dueDate ? format(newTask.dueDate, "yyyy-MM-dd") : "",
+      points: newTask.points,
+    };
+    setTasks((prev) => [...prev, task]);
+    setNewTask({ name: "", status: "Pendiente", assignee: "", project: "", dueDate: undefined, points: 10 });
+    setDialogOpen(false);
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-7xl mx-auto">
@@ -55,7 +89,10 @@ export default function Tareas() {
           <button className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors">
             <Filter className="h-3.5 w-3.5" /> Filtrar
           </button>
-          <button className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+          <button
+            onClick={() => setDialogOpen(true)}
+            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
             <Plus className="h-3.5 w-3.5" /> Nueva Tarea
           </button>
         </div>
@@ -67,9 +104,12 @@ export default function Tareas() {
           return (
             <div key={col.status} className={`space-y-3 border-t-2 ${col.color} pt-3`}>
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {col.status}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${col.dotColor}`} />
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {col.status}
+                  </h3>
+                </div>
                 <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {colTasks.length}
                 </span>
@@ -89,18 +129,115 @@ export default function Tareas() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={`h-2 w-2 rounded-full ${priorityDot[task.priority]}`} />
-                    <span>{task.priority}</span>
+                    <span className={`h-2 w-2 rounded-full ${statusDot[task.status]}`} />
+                    <span>{task.status}</span>
                     <span className="text-border">·</span>
                     <span>{task.assignee}</span>
                   </div>
-                  <p className="text-[10px] font-mono text-muted-foreground mt-2">Vence: {task.dueDate}</p>
+                  <p className="text-[10px] font-mono text-muted-foreground mt-2">
+                    {task.project} {task.dueDate && `· Vence: ${task.dueDate}`}
+                  </p>
                 </motion.div>
               ))}
             </div>
           );
         })}
       </div>
+
+      {/* Dialog Nueva Tarea */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" /> Nueva Tarea
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input
+                placeholder="Nombre de la tarea"
+                value={newTask.name}
+                onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <Select value={newTask.status} onValueChange={(v) => setNewTask((p) => ({ ...p, status: v as TaskStatus }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {columns.map((c) => (
+                    <SelectItem key={c.status} value={c.status}>
+                      <span className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${c.dotColor}`} />
+                        {c.status}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Responsable</Label>
+                <Input
+                  placeholder="Nombre"
+                  value={newTask.assignee}
+                  onChange={(e) => setNewTask((p) => ({ ...p, assignee: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Proyecto</Label>
+                <Input
+                  placeholder="Proyecto"
+                  value={newTask.project}
+                  onChange={(e) => setNewTask((p) => ({ ...p, project: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Fecha de entrega</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn("w-full justify-start text-left font-normal", !newTask.dueDate && "text-muted-foreground")}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newTask.dueDate ? format(newTask.dueDate, "dd/MM/yyyy") : "Seleccionar"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newTask.dueDate}
+                      onSelect={(d) => setNewTask((p) => ({ ...p, dueDate: d }))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>Puntaje</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={newTask.points}
+                  onChange={(e) => setNewTask((p) => ({ ...p, points: Number(e.target.value) }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={!newTask.name.trim()}>Crear Tarea</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

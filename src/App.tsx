@@ -15,6 +15,7 @@ import Facturacion from "./pages/Facturacion";
 import Monitor from "./pages/Monitor";
 import Helpdesk from "./pages/Helpdesk";
 import Reportes from "./pages/Reportes";
+import Calendario from "./pages/Calendario";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 

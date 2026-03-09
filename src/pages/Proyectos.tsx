@@ -76,8 +76,7 @@ export default function Proyectos() {
 
   const handleCreate = () => {
     if (!newProject.name.trim()) return;
-    const project: Project = {
-      id: String(Date.now()),
+    createProject.mutate({
       name: newProject.name,
       description: newProject.description,
       status: "Idea",
@@ -85,8 +84,7 @@ export default function Proyectos() {
       responsable: newProject.responsable,
       cliente: newProject.cliente,
       scores: newProject.scores,
-    };
-    setProjects((prev) => [...prev, project]);
+    });
     setNewProject({ name: "", description: "", responsable: "", cliente: "", scores: { ...defaultScores } });
     setDialogOpen(false);
   };

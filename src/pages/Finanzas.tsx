@@ -337,10 +337,10 @@ export default function Finanzas() {
         <TabsContent value="config" className="space-y-6 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="glass-card rounded-xl p-5">
-              <CategoryManager categories={categories} onChange={setCategories} />
+              <CategoryManager categories={categories} onChange={() => {}} />
             </div>
             <div className="glass-card rounded-xl p-5">
-              <PaymentMethodManager methods={paymentMethods} onChange={setPaymentMethods} />
+              <PaymentMethodManager methods={paymentMethods} onChange={() => {}} />
             </div>
           </div>
         </TabsContent>

@@ -10,6 +10,7 @@ import {
   Activity,
   Headphones,
   BarChart3,
+  CalendarDays,
   Settings,
   Rocket,
   Trophy,

@@ -15,18 +15,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   Invoice, InvoiceStatus, InvoicePayment, PaymentMethodType,
-  MOCK_INVOICES, INVOICE_STATUSES, INV_STATUS_STYLES,
+  INVOICE_STATUSES, INV_STATUS_STYLES,
   calcInvoiceTotals, calcTotalPaid, calcBalance,
-  formatInvCurrency, formatInvDate, nextInvoiceNumber, emptyInvoice,
+  formatInvCurrency, formatInvDate, emptyInvoice,
 } from "@/lib/invoice-data";
 import { InvoiceFormDialog } from "@/components/invoices/InvoiceFormDialog";
 import { InvoiceDetail } from "@/components/invoices/InvoiceDetail";
 import { PaymentDialog } from "@/components/invoices/PaymentDialog";
+import { useInvoices } from "@/hooks/useInvoices";
 
 type SortKey = "invoiceNumber" | "client" | "issueDate" | "dueDate" | "total" | "status";
 
 export default function Facturacion() {
-  const [invoices, setInvoices] = useState<Invoice[]>(MOCK_INVOICES);
+  const { invoices, isLoading, create, update, remove, addPayment } = useInvoices();
   const [formOpen, setFormOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [detailInvoice, setDetailInvoice] = useState<Invoice | null>(null);

@@ -1,69 +1,340 @@
-import { Headphones, Plus, MessageSquare } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  Headphones, Plus, Search, Eye, Pencil, Trash2,
+  AlertCircle, Clock, CheckCircle, XCircle, Inbox,
+} from "lucide-react";
 import { motion } from "framer-motion";
+import { StatCard } from "@/components/StatCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  Ticket, TicketStatus, TicketMessage, TicketActivity,
+  MOCK_TICKETS, TICKET_STATUSES, TICKET_PRIORITIES, AGENTS,
+  STATUS_STYLES, PRIORITY_STYLES,
+  formatTicketDate, formatTicketDateTime, timeAgoTicket, nextTicketId, emptyTicket,
+} from "@/lib/helpdesk-data";
+import { TicketFormDialog } from "@/components/helpdesk/TicketFormDialog";
+import { TicketDetail } from "@/components/helpdesk/TicketDetail";
 
-const tickets = [
-  { id: "HD-001", client: "TechCorp Solutions", subject: "Error en módulo de pagos", priority: "Alta", status: "Abierto", category: "Bug", date: "Mar 5" },
-  { id: "HD-002", client: "GreenEnergy MX", subject: "Solicitud de nueva funcionalidad", priority: "Media", status: "En progreso", category: "Feature", date: "Mar 4" },
-  { id: "HD-003", client: "Digital Minds", subject: "Problema de rendimiento", priority: "Crítica", status: "Abierto", category: "Performance", date: "Mar 4" },
-  { id: "HD-004", client: "EduPlat", subject: "Consulta sobre integración API", priority: "Baja", status: "En espera", category: "Consulta", date: "Mar 3" },
-  { id: "HD-005", client: "Innovatech Labs", subject: "Actualización de certificados SSL", priority: "Media", status: "Cerrado", category: "Infraestructura", date: "Mar 1" },
-];
-
-const statusBadge: Record<string, string> = {
-  Abierto: "bg-destructive/10 text-destructive",
-  "En progreso": "bg-info/10 text-info",
-  "En espera": "bg-warning/10 text-warning",
-  Cerrado: "bg-muted text-muted-foreground",
-};
-
-const priorityBadge: Record<string, string> = {
-  Crítica: "bg-destructive/10 text-destructive",
-  Alta: "bg-warning/10 text-warning",
-  Media: "bg-info/10 text-info",
-  Baja: "bg-muted text-muted-foreground",
-};
+type SortKey = "ticketId" | "priority" | "status" | "createdAt" | "updatedAt";
+const PRIORITY_ORDER: Record<string, number> = { Crítica: 4, Alta: 3, Media: 2, Baja: 1 };
 
 export default function Helpdesk() {
+  const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+  const [detailTicket, setDetailTicket] = useState<Ticket | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterAgent, setFilterAgent] = useState("all");
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  // ── Dashboard metrics ──
+  const counts = {
+    open: tickets.filter(t => t.status === "Abierto").length,
+    inProgress: tickets.filter(t => t.status === "En proceso").length,
+    pending: tickets.filter(t => t.status === "Pendiente").length,
+    resolved: tickets.filter(t => t.status === "Resuelto" || t.status === "Cerrado").length,
+  };
+
+  const today = new Date().toISOString().split("T")[0];
+  const createdToday = tickets.filter(t => t.createdAt.startsWith(today)).length;
+
+  // ── Filtered & sorted ──
+  const filtered = useMemo(() => {
+    let list = [...tickets];
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(t =>
+        t.title.toLowerCase().includes(q) || t.ticketId.toLowerCase().includes(q) ||
+        t.client.toLowerCase().includes(q) || t.requester.toLowerCase().includes(q)
+      );
+    }
+    if (filterStatus !== "all") list = list.filter(t => t.status === filterStatus);
+    if (filterPriority !== "all") list = list.filter(t => t.priority === filterPriority);
+    if (filterAgent !== "all") list = list.filter(t => t.agent === filterAgent);
+
+    list.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "ticketId": cmp = a.ticketId.localeCompare(b.ticketId); break;
+        case "priority": cmp = (PRIORITY_ORDER[a.priority] || 0) - (PRIORITY_ORDER[b.priority] || 0); break;
+        case "status": cmp = a.status.localeCompare(b.status); break;
+        case "createdAt": cmp = a.createdAt.localeCompare(b.createdAt); break;
+        case "updatedAt": cmp = a.updatedAt.localeCompare(b.updatedAt); break;
+      }
+      return sortAsc ? cmp : -cmp;
+    });
+    return list;
+  }, [tickets, search, filterStatus, filterPriority, filterAgent, sortKey, sortAsc]);
+
+  // ── CRUD ──
+  const handleSave = (data: ReturnType<typeof emptyTicket>) => {
+    const now = new Date().toISOString();
+    if (editingTicket) {
+      setTickets(prev => prev.map(t => t.id === editingTicket.id ? {
+        ...t, ...data, updatedAt: now,
+        activity: [...t.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: "Ticket editado" }],
+      } : t));
+    } else {
+      const newTicket: Ticket = {
+        ...data,
+        id: `t-${Date.now()}`,
+        ticketId: nextTicketId(),
+        messages: [],
+        activity: [{ id: `a-${Date.now()}`, date: now, user: "Sistema", action: "Ticket creado" }],
+        createdAt: now,
+        updatedAt: now,
+      };
+      if (data.agent !== "Sin asignar") {
+        newTicket.activity.push({ id: `a-${Date.now() + 1}`, date: now, user: "Sistema", action: `Ticket asignado a ${data.agent}` });
+      }
+      setTickets(prev => [newTicket, ...prev]);
+    }
+    setEditingTicket(null);
+  };
+
+  const handleDelete = (id: string) => setTickets(prev => prev.filter(t => t.id !== id));
+
+  const handleStatusChange = (ticketId: string, status: TicketStatus) => {
+    const now = new Date().toISOString();
+    setTickets(prev => prev.map(t => t.id === ticketId ? {
+      ...t, status, updatedAt: now,
+      activity: [...t.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Estado cambiado a ${status}` }],
+    } : t));
+    if (detailTicket?.id === ticketId) {
+      setDetailTicket(prev => prev ? { ...prev, status, updatedAt: now, activity: [...prev.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Estado cambiado a ${status}` }] } : null);
+    }
+  };
+
+  const handleAgentChange = (ticketId: string, agent: string) => {
+    const now = new Date().toISOString();
+    setTickets(prev => prev.map(t => t.id === ticketId ? {
+      ...t, agent, updatedAt: now,
+      activity: [...t.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Ticket asignado a ${agent}` }],
+    } : t));
+    if (detailTicket?.id === ticketId) {
+      setDetailTicket(prev => prev ? { ...prev, agent, updatedAt: now, activity: [...prev.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Ticket asignado a ${agent}` }] } : null);
+    }
+  };
+
+  const handleAddMessage = (ticketId: string, message: string) => {
+    const now = new Date().toISOString();
+    const newMsg: TicketMessage = { id: `msg-${Date.now()}`, author: "Agente", role: "agent", date: now, message };
+    const newAct: TicketActivity = { id: `a-${Date.now()}`, date: now, user: "Agente", action: "Respuesta agregada" };
+    setTickets(prev => prev.map(t => t.id === ticketId ? {
+      ...t, messages: [...t.messages, newMsg], activity: [...t.activity, newAct], updatedAt: now,
+    } : t));
+    if (detailTicket?.id === ticketId) {
+      setDetailTicket(prev => prev ? {
+        ...prev, messages: [...prev.messages, newMsg], activity: [...prev.activity, newAct], updatedAt: now,
+      } : null);
+    }
+  };
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(false); }
+  };
+
+  const SortableHead = ({ label, k }: { label: string; k: SortKey }) => (
+    <TableHead className="cursor-pointer select-none hover:text-foreground transition-colors" onClick={() => toggleSort(k)}>
+      {label} {sortKey === k ? (sortAsc ? "↑" : "↓") : ""}
+    </TableHead>
+  );
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Headphones className="h-6 w-6 text-primary" /> Helpdesk
         </h1>
-        <button className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-          <Plus className="h-3.5 w-3.5" /> Nuevo Ticket
-        </button>
+        <Button onClick={() => { setEditingTicket(null); setFormOpen(true); }}>
+          <Plus className="h-4 w-4 mr-1" /> Nuevo Ticket
+        </Button>
       </div>
 
-      <div className="glass-card rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border/50">
-              <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Ticket</th>
-              <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Cliente</th>
-              <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Categoría</th>
-              <th className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Prioridad</th>
-              <th className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Estado</th>
-              <th className="text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.map((t) => (
-              <tr key={t.id} className="border-b border-border/20 hover:bg-muted/30 transition-colors cursor-pointer">
-                <td className="p-4">
-                  <p className="font-mono text-xs text-primary font-semibold">{t.id}</p>
-                  <p className="text-xs font-medium mt-0.5">{t.subject}</p>
-                </td>
-                <td className="p-4 text-xs text-muted-foreground">{t.client}</td>
-                <td className="p-4"><span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{t.category}</span></td>
-                <td className="p-4 text-center"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${priorityBadge[t.priority]}`}>{t.priority}</span></td>
-                <td className="p-4 text-center"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusBadge[t.status]}`}>{t.status}</span></td>
-                <td className="p-4 text-right text-xs font-mono text-muted-foreground">{t.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Tabs defaultValue="dashboard">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="tickets">Tickets</TabsTrigger>
+        </TabsList>
+
+        {/* ════════════ Dashboard ════════════ */}
+        <TabsContent value="dashboard" className="space-y-6 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard title="Abiertos" value={counts.open} icon={AlertCircle} variant="default"
+              trend={counts.open > 0 ? { value: "Requieren atención", positive: false } : undefined} />
+            <StatCard title="En Proceso" value={counts.inProgress} icon={Clock} variant="secondary" />
+            <StatCard title="Pendientes" value={counts.pending} icon={Inbox} variant="primary" />
+            <StatCard title="Resueltos" value={counts.resolved} icon={CheckCircle} variant="success" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Tickets creados hoy</p>
+              <p className="text-3xl font-bold mt-1">{createdToday}</p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Tiempo promedio de respuesta</p>
+              <p className="text-3xl font-bold mt-1 font-mono">~15 min</p>
+            </motion.div>
+          </div>
+
+          {/* Urgent tickets */}
+          {tickets.filter(t => (t.priority === "Crítica" || t.priority === "Alta") && t.status !== "Resuelto" && t.status !== "Cerrado").length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5 border-l-4 border-destructive">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-destructive" /> Tickets Urgentes
+              </h3>
+              <div className="space-y-2">
+                {tickets
+                  .filter(t => (t.priority === "Crítica" || t.priority === "Alta") && t.status !== "Resuelto" && t.status !== "Cerrado")
+                  .map(t => (
+                    <div key={t.id}
+                      className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors"
+                      onClick={() => setDetailTicket(t)}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-xs font-mono text-primary font-bold shrink-0">{t.ticketId}</span>
+                        <span className="text-sm truncate">{t.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge className={`text-[10px] ${PRIORITY_STYLES[t.priority]}`}>{t.priority}</Badge>
+                        <Badge className={`text-[10px] ${STATUS_STYLES[t.status]}`}>{t.status}</Badge>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </motion.div>
+          )}
+        </TabsContent>
+
+        {/* ════════════ Tickets Table ════════════ */}
+        <TabsContent value="tickets" className="space-y-4 mt-4">
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input className="pl-9" placeholder="Buscar ticket..." value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                {TICKET_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Prioridad" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {TICKET_PRIORITIES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterAgent} onValueChange={setFilterAgent}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Agente" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {AGENTS.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Table */}
+          <div className="glass-card rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableHead label="ID" k="ticketId" />
+                  <TableHead>Título</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <SortableHead label="Prioridad" k="priority" />
+                  <SortableHead label="Estado" k="status" />
+                  <TableHead>Agente</TableHead>
+                  <SortableHead label="Creado" k="createdAt" />
+                  <SortableHead label="Actualizado" k="updatedAt" />
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 && (
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No se encontraron tickets</TableCell></TableRow>
+                )}
+                {filtered.map(t => (
+                  <TableRow key={t.id} className="group cursor-pointer" onClick={() => setDetailTicket(t)}>
+                    <TableCell className="font-mono text-xs text-primary font-bold">{t.ticketId}</TableCell>
+                    <TableCell className="text-sm max-w-[200px] truncate font-medium">{t.title}</TableCell>
+                    <TableCell className="text-xs">{t.client || "—"}</TableCell>
+                    <TableCell><Badge className={`text-[10px] ${PRIORITY_STYLES[t.priority]}`}>{t.priority}</Badge></TableCell>
+                    <TableCell><Badge className={`text-[10px] ${STATUS_STYLES[t.status]}`}>{t.status}</Badge></TableCell>
+                    <TableCell className="text-xs">{t.agent}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{formatTicketDate(t.createdAt)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{timeAgoTicket(t.updatedAt)}</TableCell>
+                    <TableCell className="text-right" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailTicket(t)}>
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTicket(t); setFormOpen(true); }}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar ticket {t.ticketId}?</AlertDialogTitle>
+                              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(t.id)}>Eliminar</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialogs */}
+      <TicketFormDialog
+        open={formOpen}
+        onOpenChange={o => { setFormOpen(o); if (!o) setEditingTicket(null); }}
+        ticket={editingTicket}
+        onSave={handleSave}
+      />
+
+      {detailTicket && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setDetailTicket(null)} />
+          <TicketDetail
+            ticket={detailTicket}
+            onClose={() => setDetailTicket(null)}
+            onStatusChange={handleStatusChange}
+            onAgentChange={handleAgentChange}
+            onAddMessage={handleAddMessage}
+          />
+        </>
+      )}
     </motion.div>
   );
 }

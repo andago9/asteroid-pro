@@ -7,17 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  CalendarEvent, CalendarView, MOCK_EVENTS, EVENT_TYPES, RESPONSIBLES,
+  CalendarEvent, CalendarView, EVENT_TYPES, RESPONSIBLES,
   EVENT_TYPE_COLORS, EVENT_TYPE_DOTS, getMonthDays, getWeekDays, getEventsForDay,
-  getHourSlots, formatEventTime, nextEventId, EventType,
+  getHourSlots, formatEventTime, EventType,
 } from "@/lib/calendar-data";
 import EventFormDialog from "@/components/calendar/EventFormDialog";
 import EventDetail from "@/components/calendar/EventDetail";
+import { useCalendar } from "@/hooks/useCalendar";
 
 const WEEK_HEADERS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 export default function Calendario() {
-  const [events, setEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
+  const { events, isLoading, create: createEvent, update: updateEvent, remove: removeEvent } = useCalendar();
   const [view, setView] = useState<CalendarView>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);

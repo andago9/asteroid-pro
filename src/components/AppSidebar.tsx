@@ -10,6 +10,7 @@ import {
   Activity,
   Headphones,
   BarChart3,
+  CalendarDays,
   Settings,
   Rocket,
   Trophy,
@@ -47,6 +48,7 @@ const operationsItems = [
   { title: "Monitor", url: "/monitor", icon: Activity },
   { title: "Helpdesk", url: "/helpdesk", icon: Headphones },
   { title: "Reportes", url: "/reportes", icon: BarChart3 },
+  { title: "Calendario", url: "/calendario", icon: CalendarDays },
 ];
 
 const systemItems = [

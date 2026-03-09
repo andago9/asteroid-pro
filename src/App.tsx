@@ -15,6 +15,7 @@ import Facturacion from "./pages/Facturacion";
 import Monitor from "./pages/Monitor";
 import Helpdesk from "./pages/Helpdesk";
 import Reportes from "./pages/Reportes";
+import Calendario from "./pages/Calendario";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/monitor" element={<Monitor />} />
               <Route path="/helpdesk" element={<Helpdesk />} />
               <Route path="/reportes" element={<Reportes />} />
+              <Route path="/calendario" element={<Calendario />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />

@@ -35,10 +35,7 @@ const PIE_COLORS = [
 type SortKey = "date" | "amount" | "type" | "category" | "status";
 
 export default function Finanzas() {
-  // ── State ──
-  const [movements, setMovements] = useState<Movement[]>(MOCK_MOVEMENTS);
-  const [categories, setCategories] = useState<FinanceCategory[]>(DEFAULT_CATEGORIES);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(DEFAULT_PAYMENT_METHODS);
+  const { movements, categories, paymentMethods, isLoading, createMovement, updateMovement, deleteMovement } = useFinance();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null);

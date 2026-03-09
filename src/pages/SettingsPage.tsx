@@ -1,6 +1,9 @@
 import { Settings, Users, Trophy, Sliders, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useNotifications, MODULE_LABELS, NotificationModule, NotificationPreferences } from "@/lib/notifications-data";
 
 const tabs = [
   { id: "users", label: "Usuarios", icon: Users },
@@ -9,8 +12,19 @@ const tabs = [
   { id: "notifications", label: "Notificaciones", icon: Bell },
 ];
 
+const PREF_MODULES: NotificationModule[] = ["tareas", "helpdesk", "ventas", "facturacion", "monitor", "calendario", "proyectos"];
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("users");
+  const { preferences, updatePreferences } = useNotifications();
+
+  const togglePref = (mod: NotificationModule, channel: "system" | "email") => {
+    const updated: NotificationPreferences = {
+      ...preferences,
+      [mod]: { ...preferences[mod], [channel]: !preferences[mod][channel] },
+    };
+    updatePreferences(updated);
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-5xl mx-auto">
@@ -99,10 +113,25 @@ export default function SettingsPage() {
         )}
         {activeTab === "notifications" && (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Notificaciones</h3>
-            <p className="text-xs text-muted-foreground">Configura alertas y notificaciones del sistema.</p>
-            <div className="text-xs text-muted-foreground font-mono p-8 text-center border border-dashed border-border rounded-lg">
-              Configuración de notificaciones — Próximamente
+            <h3 className="text-sm font-semibold">Preferencias de Notificaciones</h3>
+            <p className="text-xs text-muted-foreground">Elige qué notificaciones recibir por módulo y canal.</p>
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="grid grid-cols-[1fr_100px_100px] gap-2 p-3 bg-muted/30 text-xs font-semibold text-muted-foreground">
+                <span>Módulo</span>
+                <span className="text-center">Sistema</span>
+                <span className="text-center">Email</span>
+              </div>
+              {PREF_MODULES.map(mod => (
+                <div key={mod} className="grid grid-cols-[1fr_100px_100px] gap-2 items-center p-3 border-t border-border/50">
+                  <span className="text-sm">{MODULE_LABELS[mod]}</span>
+                  <div className="flex justify-center">
+                    <Switch checked={preferences[mod].system} onCheckedChange={() => togglePref(mod, "system")} />
+                  </div>
+                  <div className="flex justify-center">
+                    <Switch checked={preferences[mod].email} onCheckedChange={() => togglePref(mod, "email")} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

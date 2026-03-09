@@ -62,7 +62,7 @@ const statusBadge: Record<string, string> = {
 const defaultScores = { reconocimiento: 3, riesgo: 3, capital: 3, retorno: 3, factibilidad: 3, dificultad: 3, tiempo: 3, alineacion: 3 };
 
 export default function Proyectos() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const { projects, isLoading, create: createProject } = useProjects();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     name: "",

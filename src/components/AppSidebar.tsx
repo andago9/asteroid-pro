@@ -4,6 +4,7 @@ import {
   FolderKanban,
   Users,
   Package,
+  ShoppingCart,
   DollarSign,
   Activity,
   Headphones,

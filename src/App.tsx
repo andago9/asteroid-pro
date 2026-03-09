@@ -11,6 +11,7 @@ import Clientes from "./pages/Clientes";
 import Productos from "./pages/Productos";
 import Finanzas from "./pages/Finanzas";
 import Ventas from "./pages/Ventas";
+import Facturacion from "./pages/Facturacion";
 import Monitor from "./pages/Monitor";
 import Helpdesk from "./pages/Helpdesk";
 import Reportes from "./pages/Reportes";

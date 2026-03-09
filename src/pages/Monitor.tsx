@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
-  MonitorResource, MOCK_RESOURCES, RESOURCE_TYPES, STATUS_CONFIG,
+  MonitorResource, RESOURCE_TYPES, STATUS_CONFIG,
   formatLatency, timeAgo, ResourceType, emptyResource,
 } from "@/lib/monitor-data";
+import { useMonitor } from "@/hooks/useMonitor";
 
 type ResourceFormData = ReturnType<typeof emptyResource>;
 import { ResourceFormDialog } from "@/components/monitor/ResourceFormDialog";

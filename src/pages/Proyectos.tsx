@@ -22,25 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  progress: number;
-  responsable: string;
-  cliente: string;
-  scores: {
-    reconocimiento: number;
-    riesgo: number;
-    capital: number;
-    retorno: number;
-    factibilidad: number;
-    dificultad: number;
-    tiempo: number;
-    alineacion: number;
-  };
-}
 
 const weights = {
   reconocimiento: 0.10,

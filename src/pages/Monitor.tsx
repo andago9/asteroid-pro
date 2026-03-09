@@ -14,8 +14,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   MonitorResource, MOCK_RESOURCES, RESOURCE_TYPES, STATUS_CONFIG,
-  formatLatency, timeAgo, ResourceType,
+  formatLatency, timeAgo, ResourceType, emptyResource,
 } from "@/lib/monitor-data";
+
+type ResourceFormData = ReturnType<typeof emptyResource>;
 import { ResourceFormDialog } from "@/components/monitor/ResourceFormDialog";
 import { ResourceDetail } from "@/components/monitor/ResourceDetail";
 

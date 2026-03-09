@@ -5,6 +5,7 @@ import {
   Users,
   Package,
   ShoppingCart,
+  Receipt,
   DollarSign,
   Activity,
   Headphones,

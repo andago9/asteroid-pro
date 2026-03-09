@@ -18,13 +18,13 @@ import {
 } from "recharts";
 import {
   Movement, FinanceCategory, PaymentMethod,
-  MOCK_MOVEMENTS, DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHODS,
   formatFinanceCurrency, formatFinanceDate,
 } from "@/lib/finance-data";
 import { MovementFormDialog } from "@/components/finance/MovementFormDialog";
 import { MovementDetail } from "@/components/finance/MovementDetail";
 import { CategoryManager } from "@/components/finance/CategoryManager";
 import { PaymentMethodManager } from "@/components/finance/PaymentMethodManager";
+import { useFinance } from "@/hooks/useFinance";
 
 const PIE_COLORS = [
   "hsl(207, 72%, 50%)", "hsl(43, 91%, 58%)", "hsl(142, 71%, 45%)",

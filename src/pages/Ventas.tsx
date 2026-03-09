@@ -14,17 +14,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
-  Quote, QuoteStatus, MOCK_QUOTES, QUOTE_STATUSES, SELLERS,
+  Quote, QuoteStatus, QUOTE_STATUSES, SELLERS,
   STATUS_STYLES, calcQuoteTotals,
-  formatSalesCurrency, formatSalesDate, nextQuoteNumber, emptyQuote, emptyQuoteItem,
+  formatSalesCurrency, formatSalesDate, emptyQuote, emptyQuoteItem,
 } from "@/lib/sales-data";
 import { QuoteFormDialog } from "@/components/sales/QuoteFormDialog";
 import { QuoteDetail } from "@/components/sales/QuoteDetail";
+import { useQuotes } from "@/hooks/useQuotes";
 
 type SortKey = "quoteNumber" | "client" | "quoteDate" | "total" | "status";
 
 export default function Ventas() {
-  const [quotes, setQuotes] = useState<Quote[]>(MOCK_QUOTES);
+  const { quotes, isLoading, create, update, remove, convert } = useQuotes();
   const [formOpen, setFormOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [detailQuote, setDetailQuote] = useState<Quote | null>(null);

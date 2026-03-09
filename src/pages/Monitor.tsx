@@ -77,7 +77,7 @@ export default function Monitor() {
   }, [resources, search, filterType, sortKey, sortAsc]);
 
   // ── CRUD ──
-  const handleSave = (data: { name: string; type: ResourceType; url: string; port: string; frequency: string; description: string }) => {
+  const handleSave = (data: ReturnType<typeof import("@/lib/monitor-data").emptyResource>) => {
     if (editingResource) {
       setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...data } : r));
     } else {

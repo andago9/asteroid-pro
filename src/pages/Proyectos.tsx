@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FolderKanban, Plus, Star } from "lucide-react";
+import { useProjects, type Project } from "@/hooks/useProjects";
 import { motion } from "framer-motion";
 import {
   Radar,

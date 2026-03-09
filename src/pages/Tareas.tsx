@@ -10,29 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-
-type TaskStatus = "Pendiente" | "En progreso" | "En revisión" | "Completada";
-
-interface Task {
-  id: string;
-  name: string;
-  assignee: string;
-  status: TaskStatus;
-  project: string;
-  dueDate: string;
-  points: number;
-}
-
-const mockTasks: Task[] = [
-  { id: "1", name: "Diseño landing page", assignee: "Ana G.", status: "En progreso", project: "Web Corporativa", dueDate: "2026-03-10", points: 50 },
-  { id: "2", name: "API integración pagos", assignee: "Carlos M.", status: "Pendiente", project: "E-Commerce", dueDate: "2026-03-08", points: 100 },
-  { id: "3", name: "Review UX dashboard", assignee: "María L.", status: "En revisión", project: "Dashboard PAMI", dueDate: "2026-03-12", points: 30 },
-  { id: "4", name: "Deploy producción v2.1", assignee: "Jorge R.", status: "Pendiente", project: "Infraestructura", dueDate: "2026-03-09", points: 80 },
-  { id: "5", name: "Documentación técnica", assignee: "Ana G.", status: "En progreso", project: "Dashboard PAMI", dueDate: "2026-03-15", points: 20 },
-  { id: "6", name: "Tests unitarios módulo auth", assignee: "Carlos M.", status: "Completada", project: "E-Commerce", dueDate: "2026-03-05", points: 40 },
-  { id: "7", name: "Optimización queries DB", assignee: "Jorge R.", status: "Pendiente", project: "Infraestructura", dueDate: "2026-03-11", points: 60 },
-  { id: "8", name: "Diseño sistema de iconos", assignee: "María L.", status: "Completada", project: "Web Corporativa", dueDate: "2026-03-04", points: 25 },
-];
+import { useTasks, type TaskStatus, type Task } from "@/hooks/useTasks";
 
 const columns: { status: TaskStatus; color: string; dotColor: string }[] = [
   { status: "Pendiente", color: "border-muted-foreground/50", dotColor: "bg-muted-foreground" },

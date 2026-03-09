@@ -37,6 +37,7 @@ const mainItems = [
   { title: "Proyectos", url: "/proyectos", icon: FolderKanban },
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Productos", url: "/productos", icon: Package },
+  { title: "Ventas", url: "/ventas", icon: ShoppingCart },
 ];
 
 const operationsItems = [

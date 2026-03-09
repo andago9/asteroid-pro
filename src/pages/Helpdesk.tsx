@@ -14,18 +14,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   Ticket, TicketStatus, TicketMessage, TicketActivity,
-  MOCK_TICKETS, TICKET_STATUSES, TICKET_PRIORITIES, AGENTS,
+  TICKET_STATUSES, TICKET_PRIORITIES, AGENTS,
   STATUS_STYLES, PRIORITY_STYLES,
-  formatTicketDate, formatTicketDateTime, timeAgoTicket, nextTicketId, emptyTicket,
+  formatTicketDate, formatTicketDateTime, timeAgoTicket, emptyTicket,
 } from "@/lib/helpdesk-data";
 import { TicketFormDialog } from "@/components/helpdesk/TicketFormDialog";
 import { TicketDetail } from "@/components/helpdesk/TicketDetail";
+import { useTickets } from "@/hooks/useTickets";
 
 type SortKey = "ticketId" | "priority" | "status" | "createdAt" | "updatedAt";
 const PRIORITY_ORDER: Record<string, number> = { Crítica: 4, Alta: 3, Media: 2, Baja: 1 };
 
 export default function Helpdesk() {
-  const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
+  const { tickets, isLoading, create: createTicket, update: updateTicket, remove: removeTicket, changeStatus, changeAgent, addMessage } = useTickets();
   const [formOpen, setFormOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
   const [detailTicket, setDetailTicket] = useState<Ticket | null>(null);

@@ -127,14 +127,16 @@ export default function Finanzas() {
   // ── CRUD handlers ──
   const handleSave = (data: Omit<Movement, "id" | "createdAt">) => {
     if (editingMovement) {
-      setMovements(prev => prev.map(m => m.id === editingMovement.id ? { ...m, ...data } : m));
+      updateMovement.mutate({ id: editingMovement.id, data });
     } else {
-      setMovements(prev => [...prev, { ...data, id: `m-${Date.now()}`, createdAt: new Date().toISOString().split("T")[0] }]);
+      createMovement.mutate(data);
     }
     setEditingMovement(null);
   };
 
-  const handleDelete = (id: string) => setMovements(prev => prev.filter(m => m.id !== id));
+  const handleDelete = (id: string) => deleteMovement.mutate(id);
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando finanzas...</div>;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);

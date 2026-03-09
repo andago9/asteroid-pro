@@ -79,67 +79,32 @@ export default function Helpdesk() {
 
   // ── CRUD ──
   const handleSave = (data: ReturnType<typeof emptyTicket>) => {
-    const now = new Date().toISOString();
     if (editingTicket) {
-      setTickets(prev => prev.map(t => t.id === editingTicket.id ? {
-        ...t, ...data, updatedAt: now,
-        activity: [...t.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: "Ticket editado" }],
-      } : t));
+      updateTicket.mutate({ id: editingTicket.id, data });
     } else {
-      const newTicket: Ticket = {
-        ...data,
-        id: `t-${Date.now()}`,
-        ticketId: nextTicketId(),
-        messages: [],
-        activity: [{ id: `a-${Date.now()}`, date: now, user: "Sistema", action: "Ticket creado" }],
-        createdAt: now,
-        updatedAt: now,
-      };
-      if (data.agent !== "Sin asignar") {
-        newTicket.activity.push({ id: `a-${Date.now() + 1}`, date: now, user: "Sistema", action: `Ticket asignado a ${data.agent}` });
-      }
-      setTickets(prev => [newTicket, ...prev]);
+      createTicket.mutate(data);
     }
     setEditingTicket(null);
   };
 
-  const handleDelete = (id: string) => setTickets(prev => prev.filter(t => t.id !== id));
+  const handleDelete = (id: string) => removeTicket.mutate(id);
 
   const handleStatusChange = (ticketId: string, status: TicketStatus) => {
-    const now = new Date().toISOString();
-    setTickets(prev => prev.map(t => t.id === ticketId ? {
-      ...t, status, updatedAt: now,
-      activity: [...t.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Estado cambiado a ${status}` }],
-    } : t));
-    if (detailTicket?.id === ticketId) {
-      setDetailTicket(prev => prev ? { ...prev, status, updatedAt: now, activity: [...prev.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Estado cambiado a ${status}` }] } : null);
-    }
+    changeStatus.mutate({ id: ticketId, status });
+    if (detailTicket?.id === ticketId) setDetailTicket(null);
   };
 
   const handleAgentChange = (ticketId: string, agent: string) => {
-    const now = new Date().toISOString();
-    setTickets(prev => prev.map(t => t.id === ticketId ? {
-      ...t, agent, updatedAt: now,
-      activity: [...t.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Ticket asignado a ${agent}` }],
-    } : t));
-    if (detailTicket?.id === ticketId) {
-      setDetailTicket(prev => prev ? { ...prev, agent, updatedAt: now, activity: [...prev.activity, { id: `a-${Date.now()}`, date: now, user: "Sistema", action: `Ticket asignado a ${agent}` }] } : null);
-    }
+    changeAgent.mutate({ id: ticketId, agent });
+    if (detailTicket?.id === ticketId) setDetailTicket(null);
   };
 
   const handleAddMessage = (ticketId: string, message: string) => {
-    const now = new Date().toISOString();
-    const newMsg: TicketMessage = { id: `msg-${Date.now()}`, author: "Agente", role: "agent", date: now, message };
-    const newAct: TicketActivity = { id: `a-${Date.now()}`, date: now, user: "Agente", action: "Respuesta agregada" };
-    setTickets(prev => prev.map(t => t.id === ticketId ? {
-      ...t, messages: [...t.messages, newMsg], activity: [...t.activity, newAct], updatedAt: now,
-    } : t));
-    if (detailTicket?.id === ticketId) {
-      setDetailTicket(prev => prev ? {
-        ...prev, messages: [...prev.messages, newMsg], activity: [...prev.activity, newAct], updatedAt: now,
-      } : null);
-    }
+    addMessage.mutate({ ticketId, message });
+    if (detailTicket?.id === ticketId) setDetailTicket(null);
   };
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando tickets...</div>;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);

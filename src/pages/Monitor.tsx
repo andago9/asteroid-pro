@@ -82,30 +82,16 @@ export default function Monitor() {
   // ── CRUD ──
   const handleSave = (data: ResourceFormData) => {
     if (editingResource) {
-      setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...data } : r));
+      updateResource.mutate({ id: editingResource.id, data });
     } else {
-      const newResource: MonitorResource = {
-        ...data,
-        id: `r-${Date.now()}`,
-        frequency: data.frequency as any,
-        type: data.type as ResourceType,
-        status: "online",
-        latency: Math.round(Math.random() * 100 + 20),
-        lastCheck: new Date().toISOString(),
-        uptime: 100,
-        latencyHistory: Array.from({ length: 24 }, (_, i) => ({
-          time: `${String(i).padStart(2, "0")}:00`,
-          latency: Math.round(Math.random() * 80 + 20),
-        })),
-        incidents: [],
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setResources(prev => [...prev, newResource]);
+      createResource.mutate(data);
     }
     setEditingResource(null);
   };
 
-  const handleDelete = (id: string) => setResources(prev => prev.filter(r => r.id !== id));
+  const handleDelete = (id: string) => removeResource.mutate(id);
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando monitor...</div>;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);

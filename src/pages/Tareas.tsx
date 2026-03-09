@@ -27,7 +27,7 @@ const statusDot: Record<TaskStatus, string> = {
 };
 
 export default function Tareas() {
-  const [tasks, setTasks] = useState(mockTasks);
+  const { tasks, isLoading, create } = useTasks();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState({
     name: "",
@@ -40,19 +40,19 @@ export default function Tareas() {
 
   const handleCreate = () => {
     if (!newTask.name.trim()) return;
-    const task: Task = {
-      id: String(Date.now()),
+    create.mutate({
       name: newTask.name,
       status: newTask.status,
       assignee: newTask.assignee || "Sin asignar",
       project: newTask.project || "Sin proyecto",
       dueDate: newTask.dueDate ? format(newTask.dueDate, "yyyy-MM-dd") : "",
       points: newTask.points,
-    };
-    setTasks((prev) => [...prev, task]);
+    });
     setNewTask({ name: "", status: "Pendiente", assignee: "", project: "", dueDate: undefined, points: 10 });
     setDialogOpen(false);
   };
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando tareas...</div>;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-7xl mx-auto">

@@ -58,15 +58,15 @@ export default function Calendario() {
   // CRUD
   const handleSave = (data: Omit<CalendarEvent, "id">) => {
     if (editing) {
-      setEvents(prev => prev.map(e => e.id === editing.id ? { ...e, ...data } : e));
+      updateEvent.mutate({ id: editing.id, data });
     } else {
-      setEvents(prev => [...prev, { id: nextEventId(), ...data }]);
+      createEvent.mutate(data);
     }
     setEditing(null);
   };
 
   const handleEdit = (ev: CalendarEvent) => { setDetail(null); setEditing(ev); setDialogOpen(true); };
-  const handleDelete = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
+  const handleDelete = (id: string) => removeEvent.mutate(id);
 
   const openNewOnDay = (day: Date) => {
     const s = new Date(day);

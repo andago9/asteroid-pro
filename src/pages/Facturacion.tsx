@@ -15,18 +15,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   Invoice, InvoiceStatus, InvoicePayment, PaymentMethodType,
-  MOCK_INVOICES, INVOICE_STATUSES, INV_STATUS_STYLES,
+  INVOICE_STATUSES, INV_STATUS_STYLES,
   calcInvoiceTotals, calcTotalPaid, calcBalance,
-  formatInvCurrency, formatInvDate, nextInvoiceNumber, emptyInvoice,
+  formatInvCurrency, formatInvDate, emptyInvoice,
 } from "@/lib/invoice-data";
 import { InvoiceFormDialog } from "@/components/invoices/InvoiceFormDialog";
 import { InvoiceDetail } from "@/components/invoices/InvoiceDetail";
 import { PaymentDialog } from "@/components/invoices/PaymentDialog";
+import { useInvoices } from "@/hooks/useInvoices";
 
 type SortKey = "invoiceNumber" | "client" | "issueDate" | "dueDate" | "total" | "status";
 
 export default function Facturacion() {
-  const [invoices, setInvoices] = useState<Invoice[]>(MOCK_INVOICES);
+  const { invoices, isLoading, create, update, remove, addPayment } = useInvoices();
   const [formOpen, setFormOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [detailInvoice, setDetailInvoice] = useState<Invoice | null>(null);
@@ -74,48 +75,25 @@ export default function Facturacion() {
 
   // ── CRUD ──
   const handleSave = (data: ReturnType<typeof emptyInvoice>) => {
-    const now = new Date().toISOString();
     if (editingInvoice) {
-      setInvoices(prev => prev.map(i => i.id === editingInvoice.id ? { ...i, ...data, updatedAt: now } : i));
+      update.mutate({ id: editingInvoice.id, data });
     } else {
-      const newInv: Invoice = {
-        ...data, id: `inv-${Date.now()}`, invoiceNumber: nextInvoiceNumber(),
-        payments: [], createdAt: now, updatedAt: now,
-      };
-      setInvoices(prev => [newInv, ...prev]);
+      create.mutate(data);
     }
     setEditingInvoice(null);
   };
 
-  const handleDelete = (id: string) => setInvoices(prev => prev.filter(i => i.id !== id));
+  const handleDelete = (id: string) => remove.mutate(id);
 
   const handlePayment = (data: { date: string; amount: number; method: PaymentMethodType; reference: string }) => {
     if (!paymentInvoiceId) return;
-    const now = new Date().toISOString();
-    const newPayment: InvoicePayment = { id: `pay-${Date.now()}`, ...data };
-
-    setInvoices(prev => prev.map(inv => {
-      if (inv.id !== paymentInvoiceId) return inv;
-      const updated = { ...inv, payments: [...inv.payments, newPayment], updatedAt: now };
-      const bal = calcBalance(updated);
-      if (bal <= 0) updated.status = "Pagada";
-      else if (calcTotalPaid(updated.payments) > 0) updated.status = "Parcial";
-      return updated;
-    }));
-
-    // Sync detail panel
-    setDetailInvoice(prev => {
-      if (!prev || prev.id !== paymentInvoiceId) return prev;
-      const updated = { ...prev, payments: [...prev.payments, newPayment], updatedAt: now };
-      const bal = calcBalance(updated);
-      if (bal <= 0) updated.status = "Pagada";
-      else if (calcTotalPaid(updated.payments) > 0) updated.status = "Parcial";
-      return updated;
-    });
-
-    toast.success("Pago registrado. Ingreso reflejado en Finanzas.");
+    addPayment.mutate({ invoiceId: paymentInvoiceId, payment: data });
+    setDetailInvoice(null);
+    toast.success("Pago registrado.");
     setPaymentInvoiceId(null);
   };
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando facturas...</div>;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);

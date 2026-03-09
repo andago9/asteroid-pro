@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
-  MonitorResource, MOCK_RESOURCES, RESOURCE_TYPES, STATUS_CONFIG,
+  MonitorResource, RESOURCE_TYPES, STATUS_CONFIG,
   formatLatency, timeAgo, ResourceType, emptyResource,
 } from "@/lib/monitor-data";
+import { useMonitor } from "@/hooks/useMonitor";
 
 type ResourceFormData = ReturnType<typeof emptyResource>;
 import { ResourceFormDialog } from "@/components/monitor/ResourceFormDialog";
@@ -31,7 +32,7 @@ const TYPE_ICONS: Record<string, typeof Globe> = {
 type SortKey = "name" | "type" | "status" | "latency" | "uptime";
 
 export default function Monitor() {
-  const [resources, setResources] = useState<MonitorResource[]>(MOCK_RESOURCES);
+  const { resources, isLoading, create: createResource, update: updateResource, remove: removeResource } = useMonitor();
   const [formOpen, setFormOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<MonitorResource | null>(null);
   const [detailResource, setDetailResource] = useState<MonitorResource | null>(null);
@@ -81,30 +82,16 @@ export default function Monitor() {
   // ── CRUD ──
   const handleSave = (data: ResourceFormData) => {
     if (editingResource) {
-      setResources(prev => prev.map(r => r.id === editingResource.id ? { ...r, ...data } : r));
+      updateResource.mutate({ id: editingResource.id, data });
     } else {
-      const newResource: MonitorResource = {
-        ...data,
-        id: `r-${Date.now()}`,
-        frequency: data.frequency as any,
-        type: data.type as ResourceType,
-        status: "online",
-        latency: Math.round(Math.random() * 100 + 20),
-        lastCheck: new Date().toISOString(),
-        uptime: 100,
-        latencyHistory: Array.from({ length: 24 }, (_, i) => ({
-          time: `${String(i).padStart(2, "0")}:00`,
-          latency: Math.round(Math.random() * 80 + 20),
-        })),
-        incidents: [],
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setResources(prev => [...prev, newResource]);
+      createResource.mutate(data);
     }
     setEditingResource(null);
   };
 
-  const handleDelete = (id: string) => setResources(prev => prev.filter(r => r.id !== id));
+  const handleDelete = (id: string) => removeResource.mutate(id);
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando monitor...</div>;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);

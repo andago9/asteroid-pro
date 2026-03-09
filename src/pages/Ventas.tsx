@@ -14,17 +14,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
-  Quote, QuoteStatus, MOCK_QUOTES, QUOTE_STATUSES, SELLERS,
+  Quote, QuoteStatus, QUOTE_STATUSES, SELLERS,
   STATUS_STYLES, calcQuoteTotals,
-  formatSalesCurrency, formatSalesDate, nextQuoteNumber, emptyQuote, emptyQuoteItem,
+  formatSalesCurrency, formatSalesDate, emptyQuote, emptyQuoteItem,
 } from "@/lib/sales-data";
 import { QuoteFormDialog } from "@/components/sales/QuoteFormDialog";
 import { QuoteDetail } from "@/components/sales/QuoteDetail";
+import { useQuotes } from "@/hooks/useQuotes";
 
 type SortKey = "quoteNumber" | "client" | "quoteDate" | "total" | "status";
 
 export default function Ventas() {
-  const [quotes, setQuotes] = useState<Quote[]>(MOCK_QUOTES);
+  const { quotes, isLoading, create, update, remove, convert } = useQuotes();
   const [formOpen, setFormOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [detailQuote, setDetailQuote] = useState<Quote | null>(null);
@@ -83,58 +84,30 @@ export default function Ventas() {
 
   // ── CRUD ──
   const handleSave = (data: ReturnType<typeof emptyQuote>) => {
-    const now = new Date().toISOString();
     if (editingQuote) {
-      setQuotes(prev => prev.map(q => q.id === editingQuote.id ? {
-        ...q, ...data, updatedAt: now,
-        activity: [...q.activity, { id: `qa-${Date.now()}`, date: now, user: data.seller, action: "Cotización editada" }],
-      } : q));
+      update.mutate({ id: editingQuote.id, data });
     } else {
-      const newQuote: Quote = {
-        ...data,
-        id: `q-${Date.now()}`,
-        quoteNumber: nextQuoteNumber(),
-        activity: [{ id: `qa-${Date.now()}`, date: now, user: data.seller, action: "Cotización creada" }],
-        createdAt: now,
-        updatedAt: now,
-      };
-      setQuotes(prev => [newQuote, ...prev]);
+      create.mutate(data);
     }
     setEditingQuote(null);
   };
 
-  const handleDelete = (id: string) => setQuotes(prev => prev.filter(q => q.id !== id));
+  const handleDelete = (id: string) => remove.mutate(id);
 
   const handleDuplicate = (quote: Quote) => {
-    const now = new Date().toISOString();
-    const dup: Quote = {
-      ...quote,
-      id: `q-${Date.now()}`,
-      quoteNumber: nextQuoteNumber(),
-      status: "Borrador",
-      items: quote.items.map(i => ({ ...i, id: `qi-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })),
-      activity: [{ id: `qa-${Date.now()}`, date: now, user: quote.seller, action: `Cotización duplicada desde ${quote.quoteNumber}` }],
-      createdAt: now,
-      updatedAt: now,
-    };
-    setQuotes(prev => [dup, ...prev]);
-    toast.success(`Cotización duplicada como ${dup.quoteNumber}`);
+    const dup = { ...quote, status: "Borrador" as QuoteStatus, items: quote.items.map(i => ({ ...i, id: `qi-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })) };
+    create.mutate(dup);
+    toast.success("Cotización duplicada");
   };
 
   const handleConvert = (quoteId: string) => {
-    const now = new Date().toISOString();
-    setQuotes(prev => prev.map(q => q.id === quoteId ? {
-      ...q, status: "Convertida" as QuoteStatus, updatedAt: now,
-      activity: [...q.activity, { id: `qa-${Date.now()}`, date: now, user: q.seller, action: "Convertida en venta — Ingreso registrado en Finanzas" }],
-    } : q));
-    setDetailQuote(prev => {
-      if (prev?.id === quoteId) {
-        return { ...prev, status: "Convertida" as QuoteStatus, updatedAt: now, activity: [...prev.activity, { id: `qa-${Date.now()}`, date: now, user: prev.seller, action: "Convertida en venta — Ingreso registrado en Finanzas" }] };
-      }
-      return prev;
-    });
-    toast.success("Cotización convertida en venta. Ingreso registrado en Finanzas.");
+    const q = quotes.find(q => q.id === quoteId);
+    convert.mutate({ id: quoteId, seller: q?.seller ?? "" });
+    setDetailQuote(null);
+    toast.success("Cotización convertida en venta.");
   };
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando ventas...</div>;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);

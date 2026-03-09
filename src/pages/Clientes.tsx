@@ -13,17 +13,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Client, Interaction, ClientStatus } from "@/lib/clients-data";
 import {
-  MOCK_CLIENTS, SECTORS, CLIENT_STATUSES, STATUS_STYLES,
-  emptyClient, formatCurrency, formatDate,
+  SECTORS, CLIENT_STATUSES, STATUS_STYLES,
+  formatCurrency, formatDate,
 } from "@/lib/clients-data";
 import ClientFormDialog from "@/components/clients/ClientFormDialog";
 import ClientDetail from "@/components/clients/ClientDetail";
+import { useClients } from "@/hooks/useClients";
 
 type SortKey = "name" | "sector" | "city" | "status" | "responsible" | "createdAt";
 type SortDir = "asc" | "desc";
 
 export default function Clientes() {
-  const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
+  const { clients, isLoading, create, update, remove, addInteraction } = useClients();
   const [search, setSearch] = useState("");
   const [filterSector, setFilterSector] = useState("all");
   const [filterCity, setFilterCity] = useState("all");
@@ -32,14 +33,12 @@ export default function Clientes() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // dialogs
   const [formOpen, setFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // derived data
-  const cities = useMemo(() => [...new Set(clients.map((c) => c.city))].sort(), [clients]);
+  const cities = useMemo(() => [...new Set(clients.map((c) => c.city).filter(Boolean))].sort(), [clients]);
 
   const filtered = useMemo(() => {
     let result = clients.filter((c) => {
@@ -69,51 +68,27 @@ export default function Clientes() {
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  // ── CRUD handlers ────────────────────────────────────
   const handleCreate = (data: Omit<Client, "id" | "createdAt" | "interactions">) => {
-    const newClient: Client = {
-      ...data,
-      id: String(Date.now()),
-      createdAt: new Date().toISOString().split("T")[0],
-      interactions: [],
-    };
-    setClients((prev) => [...prev, newClient]);
+    create.mutate(data);
     setFormOpen(false);
   };
 
   const handleUpdate = (data: Omit<Client, "id" | "createdAt" | "interactions">) => {
     if (!editingClient) return;
-    setClients((prev) =>
-      prev.map((c) => c.id === editingClient.id ? { ...c, ...data } : c)
-    );
+    update.mutate({ id: editingClient.id, data });
     setEditingClient(null);
-    // also update detail view if open
-    if (viewingClient?.id === editingClient.id) {
-      setViewingClient((prev) => prev ? { ...prev, ...data } : null);
-    }
+    setViewingClient(null);
   };
 
   const handleDelete = () => {
     if (!deleteId) return;
-    setClients((prev) => prev.filter((c) => c.id !== deleteId));
+    remove.mutate(deleteId);
     if (viewingClient?.id === deleteId) setViewingClient(null);
     setDeleteId(null);
   };
 
   const handleAddInteraction = (clientId: string, interaction: Omit<Interaction, "id">) => {
-    const newInteraction: Interaction = { ...interaction, id: String(Date.now()) };
-    setClients((prev) =>
-      prev.map((c) =>
-        c.id === clientId
-          ? { ...c, interactions: [...c.interactions, newInteraction] }
-          : c
-      )
-    );
-    if (viewingClient?.id === clientId) {
-      setViewingClient((prev) =>
-        prev ? { ...prev, interactions: [...prev.interactions, newInteraction] } : null
-      );
-    }
+    addInteraction.mutate({ clientId, interaction });
   };
 
   const activeFilters = [filterSector, filterCity, filterStatus].filter((f) => f !== "all").length;
@@ -129,6 +104,10 @@ export default function Clientes() {
       </span>
     </th>
   );
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando clientes...</div>;
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 max-w-7xl mx-auto">
@@ -247,7 +226,6 @@ export default function Clientes() {
                 <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Contacto</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Teléfono</th>
                 <SortHeader label="Estado" field="status" />
-                <SortHeader label="Responsable" field="responsible" />
                 <SortHeader label="Creado" field="createdAt" />
                 <th className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider p-4">Acciones</th>
               </tr>
@@ -255,7 +233,7 @@ export default function Clientes() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-muted-foreground text-sm">
+                  <td colSpan={8} className="text-center py-12 text-muted-foreground text-sm">
                     No se encontraron clientes
                   </td>
                 </tr>
@@ -291,7 +269,6 @@ export default function Clientes() {
                         {c.status}
                       </span>
                     </td>
-                    <td className="p-4 text-xs">{c.responsible}</td>
                     <td className="p-4 text-xs font-mono text-muted-foreground">{formatDate(c.createdAt)}</td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -326,7 +303,6 @@ export default function Clientes() {
         </div>
       </div>
 
-      {/* Form Dialog */}
       <ClientFormDialog
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditingClient(null); }}
@@ -334,7 +310,6 @@ export default function Clientes() {
         initial={editingClient}
       />
 
-      {/* Detail Panel */}
       <AnimatePresence>
         {viewingClient && (
           <ClientDetail
@@ -347,7 +322,6 @@ export default function Clientes() {
         )}
       </AnimatePresence>
 
-      {/* Delete confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

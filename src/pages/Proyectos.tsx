@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FolderKanban, Plus, Star } from "lucide-react";
+import { useProjects, type Project } from "@/hooks/useProjects";
 import { motion } from "framer-motion";
 import {
   Radar,
@@ -21,25 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  progress: number;
-  responsable: string;
-  cliente: string;
-  scores: {
-    reconocimiento: number;
-    riesgo: number;
-    capital: number;
-    retorno: number;
-    factibilidad: number;
-    dificultad: number;
-    tiempo: number;
-    alineacion: number;
-  };
-}
 
 const weights = {
   reconocimiento: 0.10,
@@ -67,24 +49,6 @@ function calcScore(scores: Project["scores"]) {
   return Object.entries(weights).reduce((acc, [key, w]) => acc + scores[key as keyof typeof scores] * w, 0);
 }
 
-const initialProjects: Project[] = [
-  {
-    id: "1", name: "Portal E-Commerce", description: "Plataforma de comercio electrónico B2C", status: "En desarrollo", progress: 65, responsable: "Carlos M.", cliente: "Retail Corp",
-    scores: { reconocimiento: 4.0, riesgo: 3.5, capital: 4.0, retorno: 4.5, factibilidad: 4.2, dificultad: 3.0, tiempo: 3.5, alineacion: 4.0 },
-  },
-  {
-    id: "2", name: "App Móvil Fintech", description: "Aplicación de pagos y transferencias", status: "Planeación", progress: 20, responsable: "Ana R.", cliente: "FinPay",
-    scores: { reconocimiento: 4.5, riesgo: 4.0, capital: 3.0, retorno: 4.8, factibilidad: 3.5, dificultad: 2.5, tiempo: 2.8, alineacion: 3.8 },
-  },
-  {
-    id: "3", name: "Dashboard Analytics", description: "Panel de análisis de datos en tiempo real", status: "En desarrollo", progress: 80, responsable: "Luis G.", cliente: "DataView",
-    scores: { reconocimiento: 3.5, riesgo: 3.0, capital: 4.5, retorno: 4.0, factibilidad: 4.8, dificultad: 3.5, tiempo: 4.0, alineacion: 4.5 },
-  },
-  {
-    id: "4", name: "CRM Interno", description: "Sistema de gestión de relaciones con clientes", status: "Idea", progress: 5, responsable: "María P.", cliente: "Interno",
-    scores: { reconocimiento: 3.0, riesgo: 2.5, capital: 4.0, retorno: 3.5, factibilidad: 4.0, dificultad: 3.8, tiempo: 3.5, alineacion: 4.2 },
-  },
-];
 
 const statusBadge: Record<string, string> = {
   Idea: "bg-muted text-muted-foreground",
@@ -98,7 +62,7 @@ const statusBadge: Record<string, string> = {
 const defaultScores = { reconocimiento: 3, riesgo: 3, capital: 3, retorno: 3, factibilidad: 3, dificultad: 3, tiempo: 3, alineacion: 3 };
 
 export default function Proyectos() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const { projects, isLoading, create: createProject } = useProjects();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     name: "",
@@ -112,8 +76,7 @@ export default function Proyectos() {
 
   const handleCreate = () => {
     if (!newProject.name.trim()) return;
-    const project: Project = {
-      id: String(Date.now()),
+    createProject.mutate({
       name: newProject.name,
       description: newProject.description,
       status: "Idea",
@@ -121,8 +84,7 @@ export default function Proyectos() {
       responsable: newProject.responsable,
       cliente: newProject.cliente,
       scores: newProject.scores,
-    };
-    setProjects((prev) => [...prev, project]);
+    });
     setNewProject({ name: "", description: "", responsable: "", cliente: "", scores: { ...defaultScores } });
     setDialogOpen(false);
   };

@@ -7,17 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  CalendarEvent, CalendarView, MOCK_EVENTS, EVENT_TYPES, RESPONSIBLES,
+  CalendarEvent, CalendarView, EVENT_TYPES, RESPONSIBLES,
   EVENT_TYPE_COLORS, EVENT_TYPE_DOTS, getMonthDays, getWeekDays, getEventsForDay,
-  getHourSlots, formatEventTime, nextEventId, EventType,
+  getHourSlots, formatEventTime, EventType,
 } from "@/lib/calendar-data";
 import EventFormDialog from "@/components/calendar/EventFormDialog";
 import EventDetail from "@/components/calendar/EventDetail";
+import { useCalendar } from "@/hooks/useCalendar";
 
 const WEEK_HEADERS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 export default function Calendario() {
-  const [events, setEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
+  const { events, isLoading, create: createEvent, update: updateEvent, remove: removeEvent } = useCalendar();
   const [view, setView] = useState<CalendarView>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -57,15 +58,15 @@ export default function Calendario() {
   // CRUD
   const handleSave = (data: Omit<CalendarEvent, "id">) => {
     if (editing) {
-      setEvents(prev => prev.map(e => e.id === editing.id ? { ...e, ...data } : e));
+      updateEvent.mutate({ id: editing.id, data });
     } else {
-      setEvents(prev => [...prev, { id: nextEventId(), ...data }]);
+      createEvent.mutate(data);
     }
     setEditing(null);
   };
 
   const handleEdit = (ev: CalendarEvent) => { setDetail(null); setEditing(ev); setDialogOpen(true); };
-  const handleDelete = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
+  const handleDelete = (id: string) => removeEvent.mutate(id);
 
   const openNewOnDay = (day: Date) => {
     const s = new Date(day);

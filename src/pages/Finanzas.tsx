@@ -18,13 +18,13 @@ import {
 } from "recharts";
 import {
   Movement, FinanceCategory, PaymentMethod,
-  MOCK_MOVEMENTS, DEFAULT_CATEGORIES, DEFAULT_PAYMENT_METHODS,
   formatFinanceCurrency, formatFinanceDate,
 } from "@/lib/finance-data";
 import { MovementFormDialog } from "@/components/finance/MovementFormDialog";
 import { MovementDetail } from "@/components/finance/MovementDetail";
 import { CategoryManager } from "@/components/finance/CategoryManager";
 import { PaymentMethodManager } from "@/components/finance/PaymentMethodManager";
+import { useFinance } from "@/hooks/useFinance";
 
 const PIE_COLORS = [
   "hsl(207, 72%, 50%)", "hsl(43, 91%, 58%)", "hsl(142, 71%, 45%)",
@@ -35,10 +35,7 @@ const PIE_COLORS = [
 type SortKey = "date" | "amount" | "type" | "category" | "status";
 
 export default function Finanzas() {
-  // ── State ──
-  const [movements, setMovements] = useState<Movement[]>(MOCK_MOVEMENTS);
-  const [categories, setCategories] = useState<FinanceCategory[]>(DEFAULT_CATEGORIES);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(DEFAULT_PAYMENT_METHODS);
+  const { movements, categories, paymentMethods, isLoading, createMovement, updateMovement, deleteMovement } = useFinance();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
@@ -130,14 +127,16 @@ export default function Finanzas() {
   // ── CRUD handlers ──
   const handleSave = (data: Omit<Movement, "id" | "createdAt">) => {
     if (editingMovement) {
-      setMovements(prev => prev.map(m => m.id === editingMovement.id ? { ...m, ...data } : m));
+      updateMovement.mutate({ id: editingMovement.id, data });
     } else {
-      setMovements(prev => [...prev, { ...data, id: `m-${Date.now()}`, createdAt: new Date().toISOString().split("T")[0] }]);
+      createMovement.mutate(data);
     }
     setEditingMovement(null);
   };
 
-  const handleDelete = (id: string) => setMovements(prev => prev.filter(m => m.id !== id));
+  const handleDelete = (id: string) => deleteMovement.mutate(id);
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando finanzas...</div>;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -338,10 +337,10 @@ export default function Finanzas() {
         <TabsContent value="config" className="space-y-6 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="glass-card rounded-xl p-5">
-              <CategoryManager categories={categories} onChange={setCategories} />
+              <CategoryManager categories={categories} onChange={() => {}} />
             </div>
             <div className="glass-card rounded-xl p-5">
-              <PaymentMethodManager methods={paymentMethods} onChange={setPaymentMethods} />
+              <PaymentMethodManager methods={paymentMethods} onChange={() => {}} />
             </div>
           </div>
         </TabsContent>

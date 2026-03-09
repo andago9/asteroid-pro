@@ -1,0 +1,86 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  progress: number;
+  responsable: string;
+  cliente: string;
+  scores: {
+    reconocimiento: number;
+    riesgo: number;
+    capital: number;
+    retorno: number;
+    factibilidad: number;
+    dificultad: number;
+    tiempo: number;
+    alineacion: number;
+  };
+}
+
+function mapRow(r: any): Project {
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description ?? "",
+    status: r.status === "En progreso" ? "En desarrollo" : r.status === "Completado" ? "Ejecutado" : r.status ?? "Idea",
+    progress: r.progress ?? 0,
+    responsable: r.responsible ?? "",
+    cliente: r.client ?? "",
+    scores: {
+      reconocimiento: Number(r.score_client ?? 3),
+      riesgo: Number(r.score_risk ?? 3),
+      capital: Number(r.score_budget ?? 3),
+      retorno: Number(r.score_quality ?? 3),
+      factibilidad: Number(r.score_scope ?? 3),
+      dificultad: 3,
+      tiempo: Number(r.score_time ?? 3),
+      alineacion: 3,
+    },
+  };
+}
+
+function localStatusToDB(s: string) {
+  if (s === "En desarrollo") return "En progreso";
+  if (s === "Ejecutado") return "Completado";
+  return s;
+}
+
+export function useProjects() {
+  const qc = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map(mapRow);
+    },
+  });
+
+  const create = useMutation({
+    mutationFn: async (p: Omit<Project, "id">) => {
+      const { error } = await supabase.from("projects").insert({
+        name: p.name,
+        description: p.description,
+        status: localStatusToDB(p.status) as any,
+        progress: p.progress,
+        responsible: p.responsable,
+        client: p.cliente,
+        score_client: p.scores.reconocimiento,
+        score_risk: p.scores.riesgo,
+        score_budget: p.scores.capital,
+        score_quality: p.scores.retorno,
+        score_scope: p.scores.factibilidad,
+        score_time: p.scores.tiempo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
+  });
+
+  return { projects: query.data ?? [], isLoading: query.isLoading, create };
+}

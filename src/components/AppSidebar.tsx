@@ -42,6 +42,7 @@ const mainItems = [
 ];
 
 const operationsItems = [
+  { title: "Facturación", url: "/facturacion", icon: Receipt },
   { title: "Finanzas", url: "/finanzas", icon: DollarSign },
   { title: "Monitor", url: "/monitor", icon: Activity },
   { title: "Helpdesk", url: "/helpdesk", icon: Headphones },

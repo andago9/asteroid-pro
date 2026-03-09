@@ -32,7 +32,7 @@ const TYPE_ICONS: Record<string, typeof Globe> = {
 type SortKey = "name" | "type" | "status" | "latency" | "uptime";
 
 export default function Monitor() {
-  const [resources, setResources] = useState<MonitorResource[]>(MOCK_RESOURCES);
+  const { resources, isLoading, create: createResource, update: updateResource, remove: removeResource } = useMonitor();
   const [formOpen, setFormOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<MonitorResource | null>(null);
   const [detailResource, setDetailResource] = useState<MonitorResource | null>(null);

@@ -115,7 +115,7 @@ export function useTickets() {
         subject: t.title,
         description: t.description,
         type: localTypeToDB(t.type) as any,
-        priority: t.priority as any,
+        priority: localPriorityToDB(t.priority) as any,
         status: localStatusToDB(t.status) as any,
         client_name: t.client,
         assigned_agent: t.agent === "Sin asignar" ? "" : t.agent,

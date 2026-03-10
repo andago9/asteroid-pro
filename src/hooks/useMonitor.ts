@@ -83,12 +83,11 @@ export function useMonitor() {
 
   const update = useMutation({
     mutationFn: async ({ id, data: r }: { id: string; data: { name: string; type: string; url: string; port: string; frequency: string; description: string } }) => {
-      const typeMap: Record<string, string> = {
-        "Aplicación": "Servicio", "Servicio": "Servicio", "Web": "Web", "Servidor": "Servidor",
-      };
       await supabase.from("monitor_resources").update({
         name: r.name,
-        type: (typeMap[r.type] ?? "Servicio") as any,
+        type: r.type as any,
+        url: r.url,
+        frequency: r.frequency as any,
         url: r.url,
         frequency: r.frequency as any,
       }).eq("id", id);

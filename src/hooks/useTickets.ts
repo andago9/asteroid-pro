@@ -35,7 +35,7 @@ function mapRow(r: any): Ticket {
     title: r.subject,
     description: r.description ?? "",
     type: (typeMap[r.type] ?? r.type) as any,
-    priority: r.priority as any,
+    priority: (r.priority === "Urgente" ? "Crítica" : r.priority) as any,
     status: (statusMap[r.status] ?? r.status) as any,
     client: r.client_name ?? "",
     requester: r.client_name ?? "",

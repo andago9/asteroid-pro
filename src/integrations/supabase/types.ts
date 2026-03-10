@@ -934,7 +934,16 @@ export type Database = {
         | "Evento"
         | "Otro"
       client_status: "Activo" | "Inactivo" | "Prospecto" | "Suspendido"
-      doc_type: "RFC" | "INE" | "Contrato" | "Otro"
+      doc_type:
+        | "RFC"
+        | "INE"
+        | "Contrato"
+        | "Otro"
+        | "NIT"
+        | "CC"
+        | "CE"
+        | "Pasaporte"
+        | "RUC"
       event_priority: "alta" | "media" | "baja"
       event_type: "reunión" | "tarea" | "soporte" | "recordatorio" | "general"
       interaction_type: "Llamada" | "Correo" | "Reunión" | "Nota" | "Soporte"
@@ -1119,7 +1128,17 @@ export const Constants = {
         "Otro",
       ],
       client_status: ["Activo", "Inactivo", "Prospecto", "Suspendido"],
-      doc_type: ["RFC", "INE", "Contrato", "Otro"],
+      doc_type: [
+        "RFC",
+        "INE",
+        "Contrato",
+        "Otro",
+        "NIT",
+        "CC",
+        "CE",
+        "Pasaporte",
+        "RUC",
+      ],
       event_priority: ["alta", "media", "baja"],
       event_type: ["reunión", "tarea", "soporte", "recordatorio", "general"],
       interaction_type: ["Llamada", "Correo", "Reunión", "Nota", "Soporte"],

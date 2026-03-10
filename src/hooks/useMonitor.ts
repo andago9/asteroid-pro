@@ -68,12 +68,11 @@ export function useMonitor() {
 
   const create = useMutation({
     mutationFn: async (r: { name: string; type: string; url: string; port: string; frequency: string; description: string }) => {
-      const typeMap: Record<string, string> = {
-        "Aplicación": "Servicio", "Servicio": "Servicio", "Web": "Web", "Servidor": "Servidor",
-      };
       const { error } = await supabase.from("monitor_resources").insert({
         name: r.name,
-        type: (typeMap[r.type] ?? "Servicio") as any,
+        type: r.type as any,
+        url: r.url,
+        frequency: r.frequency as any,
         url: r.url,
         frequency: r.frequency as any,
       });

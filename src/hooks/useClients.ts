@@ -122,8 +122,6 @@ export function useClients() {
         type: (typeToDB[interaction.type] ?? "Nota") as any,
         summary: interaction.note,
       });
-        summary: interaction.note,
-      });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),

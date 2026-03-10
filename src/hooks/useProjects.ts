@@ -26,7 +26,7 @@ function mapRow(r: any): Project {
     id: r.id,
     name: r.name,
     description: r.description ?? "",
-    status: r.status === "En progreso" ? "En desarrollo" : r.status === "Completado" ? "Ejecutado" : r.status ?? "Idea",
+    status: r.status ?? "Idea",
     progress: r.progress ?? 0,
     responsable: r.responsible ?? "",
     cliente: r.client ?? "",
@@ -41,12 +41,6 @@ function mapRow(r: any): Project {
       alineacion: 3,
     },
   };
-}
-
-function localStatusToDB(s: string) {
-  if (s === "En desarrollo") return "En progreso";
-  if (s === "Ejecutado") return "Completado";
-  return s;
 }
 
 export function useProjects() {
@@ -66,7 +60,7 @@ export function useProjects() {
       const { error } = await supabase.from("projects").insert({
         name: p.name,
         description: p.description,
-        status: localStatusToDB(p.status) as any,
+        status: p.status as any,
         progress: p.progress,
         responsible: p.responsable,
         client: p.cliente,

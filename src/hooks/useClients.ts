@@ -25,12 +25,17 @@ function mapRow(r: any): Client {
     potentialValue: 0,
     notes: r.notes ?? "",
     tags: [],
-    interactions: r.client_interactions?.map((i: any) => ({
-      id: i.id,
-      date: i.date,
-      type: i.type ?? "Nota",
-      note: i.summary ?? "",
-    })) ?? [],
+    interactions: r.client_interactions?.map((i: any) => {
+      const typeFromDB: Record<string, string> = {
+        "Llamada": "Llamada", "Correo": "Email", "Reunión": "Reunión", "Nota": "WhatsApp", "Soporte": "Llamada",
+      };
+      return {
+        id: i.id,
+        date: i.date,
+        type: (typeFromDB[i.type] ?? i.type) as any,
+        note: i.summary ?? "",
+      };
+    }) ?? [],
     createdAt: r.created_at?.split("T")[0] ?? "",
   };
 }

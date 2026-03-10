@@ -20,7 +20,7 @@ function localStatusToDB(s: string) {
 function mapType(t: string | null): string {
   const map: Record<string, string> = {
     "Servidor": "Servidor", "API": "Servicio", "Web": "Web",
-    "Base de datos": "Servicio", "Servicio": "Servicio",
+    "Base de datos": "Servicio", "Servicio": "Servicio", "Aplicación": "Aplicación",
   };
   return map[t ?? ""] ?? "Servicio";
 }

@@ -60,7 +60,7 @@ export function useProjects() {
       const { error } = await supabase.from("projects").insert({
         name: p.name,
         description: p.description,
-        status: localStatusToDB(p.status) as any,
+        status: p.status as any,
         progress: p.progress,
         responsible: p.responsable,
         client: p.cliente,

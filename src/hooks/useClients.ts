@@ -113,10 +113,15 @@ export function useClients() {
 
   const addInteraction = useMutation({
     mutationFn: async ({ clientId, interaction }: { clientId: string; interaction: Omit<Interaction, "id"> }) => {
+      const typeToDB: Record<string, string> = {
+        "Llamada": "Llamada", "Email": "Correo", "Reunión": "Reunión", "WhatsApp": "Nota",
+      };
       const { error } = await supabase.from("client_interactions").insert({
         client_id: clientId,
         date: interaction.date,
-        type: interaction.type as any,
+        type: (typeToDB[interaction.type] ?? "Nota") as any,
+        summary: interaction.note,
+      });
         summary: interaction.note,
       });
       if (error) throw error;

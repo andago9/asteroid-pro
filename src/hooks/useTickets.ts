@@ -63,6 +63,11 @@ function localTypeToDB(t: string) {
   return map[t] ?? t;
 }
 
+function localPriorityToDB(p: string) {
+  if (p === "Crítica") return "Urgente";
+  return p;
+}
+
 export function useTickets() {
   const qc = useQueryClient();
 

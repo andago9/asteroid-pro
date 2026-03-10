@@ -958,7 +958,13 @@ export type Database = {
         | "Otro"
       product_status: "Activo" | "Pausado" | "Descontinuado"
       product_type: "Producto" | "Servicio"
-      project_status: "En progreso" | "Completado" | "Pausado" | "Cancelado"
+      project_status:
+        | "En progreso"
+        | "Completado"
+        | "Pausado"
+        | "Cancelado"
+        | "Idea"
+        | "Planeación"
       quote_status:
         | "Borrador"
         | "Enviada"
@@ -1139,7 +1145,14 @@ export const Constants = {
       ],
       product_status: ["Activo", "Pausado", "Descontinuado"],
       product_type: ["Producto", "Servicio"],
-      project_status: ["En progreso", "Completado", "Pausado", "Cancelado"],
+      project_status: [
+        "En progreso",
+        "Completado",
+        "Pausado",
+        "Cancelado",
+        "Idea",
+        "Planeación",
+      ],
       quote_status: [
         "Borrador",
         "Enviada",

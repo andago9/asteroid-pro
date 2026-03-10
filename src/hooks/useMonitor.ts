@@ -86,8 +86,6 @@ export function useMonitor() {
         type: r.type as any,
         url: r.url,
         frequency: r.frequency as any,
-        url: r.url,
-        frequency: r.frequency as any,
       }).eq("id", id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["monitor_resources"] }),

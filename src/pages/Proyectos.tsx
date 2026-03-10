@@ -53,10 +53,10 @@ function calcScore(scores: Project["scores"]) {
 const statusBadge: Record<string, string> = {
   Idea: "bg-muted text-muted-foreground",
   Planeación: "bg-info/10 text-info",
-  "En desarrollo": "bg-primary/10 text-primary",
+  "En progreso": "bg-primary/10 text-primary",
   Pausado: "bg-warning/10 text-warning",
   Cancelado: "bg-destructive/10 text-destructive",
-  Ejecutado: "bg-success/10 text-success",
+  Completado: "bg-success/10 text-success",
 };
 
 const defaultScores = { reconocimiento: 3, riesgo: 3, capital: 3, retorno: 3, factibilidad: 3, dificultad: 3, tiempo: 3, alineacion: 3 };

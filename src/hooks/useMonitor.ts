@@ -73,8 +73,6 @@ export function useMonitor() {
         type: r.type as any,
         url: r.url,
         frequency: r.frequency as any,
-        url: r.url,
-        frequency: r.frequency as any,
       });
       if (error) throw error;
     },

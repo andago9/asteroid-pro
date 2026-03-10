@@ -933,6 +933,7 @@ export type Database = {
         | "Llamada"
         | "Evento"
         | "Otro"
+        | "WhatsApp"
       client_status: "Activo" | "Inactivo" | "Prospecto" | "Suspendido"
       doc_type:
         | "RFC"
@@ -982,7 +983,13 @@ export type Database = {
         | "Convertida"
         | "Vencida"
       resource_status: "Operativo" | "Degradado" | "Caído" | "Mantenimiento"
-      resource_type: "Servidor" | "API" | "Web" | "Base de datos" | "Servicio"
+      resource_type:
+        | "Servidor"
+        | "API"
+        | "Web"
+        | "Base de datos"
+        | "Servicio"
+        | "Aplicación"
       task_status: "pendiente" | "en_progreso" | "revision" | "completada"
       ticket_priority: "Baja" | "Media" | "Alta" | "Urgente"
       ticket_status:
@@ -1126,6 +1133,7 @@ export const Constants = {
         "Llamada",
         "Evento",
         "Otro",
+        "WhatsApp",
       ],
       client_status: ["Activo", "Inactivo", "Prospecto", "Suspendido"],
       doc_type: [
@@ -1181,7 +1189,14 @@ export const Constants = {
         "Vencida",
       ],
       resource_status: ["Operativo", "Degradado", "Caído", "Mantenimiento"],
-      resource_type: ["Servidor", "API", "Web", "Base de datos", "Servicio"],
+      resource_type: [
+        "Servidor",
+        "API",
+        "Web",
+        "Base de datos",
+        "Servicio",
+        "Aplicación",
+      ],
       task_status: ["pendiente", "en_progreso", "revision", "completada"],
       ticket_priority: ["Baja", "Media", "Alta", "Urgente"],
       ticket_status: [

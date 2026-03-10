@@ -35,7 +35,7 @@ function mapRow(r: any): Ticket {
     title: r.subject,
     description: r.description ?? "",
     type: (typeMap[r.type] ?? r.type) as any,
-    priority: r.priority as any,
+    priority: (r.priority === "Urgente" ? "Crítica" : r.priority) as any,
     status: (statusMap[r.status] ?? r.status) as any,
     client: r.client_name ?? "",
     requester: r.client_name ?? "",
@@ -61,6 +61,11 @@ function localTypeToDB(t: string) {
     "Soporte": "Soporte", "Incidente": "Bug", "Mejora": "Feature", "Consulta": "Consulta",
   };
   return map[t] ?? t;
+}
+
+function localPriorityToDB(p: string) {
+  if (p === "Crítica") return "Urgente";
+  return p;
 }
 
 export function useTickets() {
@@ -89,7 +94,7 @@ export function useTickets() {
         subject: t.title,
         description: t.description,
         type: localTypeToDB(t.type) as any,
-        priority: t.priority as any,
+        priority: localPriorityToDB(t.priority) as any,
         status: localStatusToDB(t.status) as any,
         client_name: t.client,
         assigned_agent: t.agent === "Sin asignar" ? "" : t.agent,
@@ -110,7 +115,7 @@ export function useTickets() {
         subject: t.title,
         description: t.description,
         type: localTypeToDB(t.type) as any,
-        priority: t.priority as any,
+        priority: localPriorityToDB(t.priority) as any,
         status: localStatusToDB(t.status) as any,
         client_name: t.client,
         assigned_agent: t.agent === "Sin asignar" ? "" : t.agent,

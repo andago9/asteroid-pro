@@ -20,7 +20,7 @@ function localStatusToDB(s: string) {
 function mapType(t: string | null): string {
   const map: Record<string, string> = {
     "Servidor": "Servidor", "API": "Servicio", "Web": "Web",
-    "Base de datos": "Servicio", "Servicio": "Servicio",
+    "Base de datos": "Servicio", "Servicio": "Servicio", "Aplicación": "Aplicación",
   };
   return map[t ?? ""] ?? "Servicio";
 }
@@ -68,12 +68,9 @@ export function useMonitor() {
 
   const create = useMutation({
     mutationFn: async (r: { name: string; type: string; url: string; port: string; frequency: string; description: string }) => {
-      const typeMap: Record<string, string> = {
-        "Aplicación": "Servicio", "Servicio": "Servicio", "Web": "Web", "Servidor": "Servidor",
-      };
       const { error } = await supabase.from("monitor_resources").insert({
         name: r.name,
-        type: (typeMap[r.type] ?? "Servicio") as any,
+        type: r.type as any,
         url: r.url,
         frequency: r.frequency as any,
       });
@@ -84,12 +81,9 @@ export function useMonitor() {
 
   const update = useMutation({
     mutationFn: async ({ id, data: r }: { id: string; data: { name: string; type: string; url: string; port: string; frequency: string; description: string } }) => {
-      const typeMap: Record<string, string> = {
-        "Aplicación": "Servicio", "Servicio": "Servicio", "Web": "Web", "Servidor": "Servidor",
-      };
       await supabase.from("monitor_resources").update({
         name: r.name,
-        type: (typeMap[r.type] ?? "Servicio") as any,
+        type: r.type as any,
         url: r.url,
         frequency: r.frequency as any,
       }).eq("id", id);

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +11,24 @@ import { Mail, Lock, User, Chrome } from "lucide-react";
 import logo from "@/assets/logo-pami.png";
 
 export default function Auth() {
+  const { session, loading } = useAuth();
+
+  // Redirect if already authenticated
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (session) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <AuthForm />;
+}
+
+function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgot, setIsForgot] = useState(false);
   const [email, setEmail] = useState("");

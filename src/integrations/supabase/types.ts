@@ -571,6 +571,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          status: Database["public"]["Enums"]["user_status"] | null
           updated_at: string
         }
         Insert: {
@@ -578,6 +579,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string
         }
         Update: {
@@ -585,6 +587,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string
         }
         Relationships: []
@@ -1023,6 +1026,7 @@ export type Database = {
         | "Resuelto"
         | "Cerrado"
       ticket_type: "Soporte" | "Bug" | "Feature" | "Consulta"
+      user_status: "disponible" | "ocupado" | "ausente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1231,6 +1235,7 @@ export const Constants = {
         "Cerrado",
       ],
       ticket_type: ["Soporte", "Bug", "Feature", "Consulta"],
+      user_status: ["disponible", "ocupado", "ausente"],
     },
   },
 } as const

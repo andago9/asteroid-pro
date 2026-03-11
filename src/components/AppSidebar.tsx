@@ -137,6 +137,18 @@ export function AppSidebar() {
             </p>
           </div>
         )}
+        <button
+          onClick={signOut}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors mt-2"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Cerrar sesión</span>}
+        </button>
+        {!collapsed && user && (
+          <p className="text-[10px] text-sidebar-foreground/40 font-mono truncate mt-1 px-3">
+            {user.email}
+          </p>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

@@ -23,6 +23,7 @@ import Reportes from "./pages/Reportes";
 import Calendario from "./pages/Calendario";
 import Notificaciones from "./pages/Notificaciones";
 import SettingsPage from "./pages/SettingsPage";
+import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -14,9 +14,11 @@ import {
   Settings,
   Rocket,
   Trophy,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo-pami.png";
 
 import {
@@ -59,6 +61,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { signOut, user } = useAuth();
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -133,6 +136,18 @@ export function AppSidebar() {
               2,450 XP — Próximo: 3,000
             </p>
           </div>
+        )}
+        <button
+          onClick={signOut}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors mt-2"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Cerrar sesión</span>}
+        </button>
+        {!collapsed && user && (
+          <p className="text-[10px] text-sidebar-foreground/40 font-mono truncate mt-1 px-3">
+            {user.email}
+          </p>
         )}
       </SidebarFooter>
     </Sidebar>

@@ -1,4 +1,4 @@
-import { CheckSquare, Plus, Filter, Zap, CalendarIcon } from "lucide-react";
+import { CheckSquare, Plus, Zap, CalendarIcon, Pencil, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -11,6 +11,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useTasks, type TaskStatus, type Task } from "@/hooks/useTasks";
+import { useProjects } from "@/hooks/useProjects";
+import { useClients } from "@/hooks/useClients";
+import { useSystemUsers } from "@/hooks/useSystemUsers";
+import { toast } from "sonner";
 
 const columns: { status: TaskStatus; color: string; dotColor: string }[] = [
   { status: "Pendiente", color: "border-muted-foreground/50", dotColor: "bg-muted-foreground" },
@@ -26,30 +30,89 @@ const statusDot: Record<TaskStatus, string> = {
   Completada: "bg-success",
 };
 
-export default function Tareas() {
-  const { tasks, isLoading, create } = useTasks();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [newTask, setNewTask] = useState({
-    name: "",
-    status: "Pendiente" as TaskStatus,
-    assignee: "",
-    project: "",
-    dueDate: undefined as Date | undefined,
-    points: 10,
-  });
+type TaskFormData = {
+  name: string;
+  status: TaskStatus;
+  assignee: string;
+  assignedBy: string;
+  project: string;
+  projectId: string;
+  clientName: string;
+  dueDate: Date | undefined;
+  points: number;
+};
 
-  const handleCreate = () => {
-    if (!newTask.name.trim()) return;
-    create.mutate({
-      name: newTask.name,
-      status: newTask.status,
-      assignee: newTask.assignee || "Sin asignar",
-      project: newTask.project || "Sin proyecto",
-      dueDate: newTask.dueDate ? format(newTask.dueDate, "yyyy-MM-dd") : "",
-      points: newTask.points,
+const emptyForm = (): TaskFormData => ({
+  name: "", status: "Pendiente", assignee: "", assignedBy: "",
+  project: "", projectId: "", clientName: "", dueDate: undefined, points: 10,
+});
+
+export default function Tareas() {
+  const { tasks, isLoading, create, updateTask, updateStatus } = useTasks();
+  const { projects } = useProjects();
+  const { clients } = useClients();
+  const { users } = useSystemUsers();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [form, setForm] = useState<TaskFormData>(emptyForm());
+
+  const openCreate = () => {
+    setEditingTask(null);
+    setForm(emptyForm());
+    setDialogOpen(true);
+  };
+
+  const openEdit = (task: Task) => {
+    setEditingTask(task);
+    setForm({
+      name: task.name,
+      status: task.status,
+      assignee: task.assignee === "Sin asignar" ? "" : task.assignee,
+      assignedBy: task.assignedBy,
+      project: task.project === "Sin proyecto" ? "" : task.project,
+      projectId: task.projectId,
+      clientName: task.clientName,
+      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+      points: task.points,
     });
-    setNewTask({ name: "", status: "Pendiente", assignee: "", project: "", dueDate: undefined, points: 10 });
+    setDialogOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    const payload = {
+      name: form.name,
+      status: form.status,
+      assignee: form.assignee || "Sin asignar",
+      assignedBy: form.assignedBy,
+      project: form.project || "Sin proyecto",
+      projectId: form.projectId,
+      clientName: form.clientName,
+      dueDate: form.dueDate ? format(form.dueDate, "yyyy-MM-dd") : "",
+      points: form.points,
+    };
+    if (editingTask) {
+      updateTask.mutate({ id: editingTask.id, data: payload });
+      toast.success("Tarea actualizada");
+    } else {
+      create.mutate(payload);
+      toast.success("Tarea creada");
+    }
+    setForm(emptyForm());
     setDialogOpen(false);
+    setEditingTask(null);
+  };
+
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    updateStatus.mutate({ id: taskId, status: newStatus });
+    toast.success(`Estado actualizado a ${newStatus}`);
+  };
+
+  const getNextStatus = (current: TaskStatus): TaskStatus | null => {
+    const order: TaskStatus[] = ["Pendiente", "En progreso", "En revisión", "Completada"];
+    const idx = order.indexOf(current);
+    return idx < order.length - 1 ? order[idx + 1] : null;
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Cargando tareas...</div>;
@@ -63,17 +126,9 @@ export default function Tareas() {
           </h1>
           <p className="text-sm text-muted-foreground font-mono mt-1">Vista Kanban · {tasks.length} tareas</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors">
-            <Filter className="h-3.5 w-3.5" /> Filtrar
-          </button>
-          <button
-            onClick={() => setDialogOpen(true)}
-            className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" /> Nueva Tarea
-          </button>
-        </div>
+        <button onClick={openCreate} className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+          <Plus className="h-3.5 w-3.5" /> Nueva Tarea
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -84,67 +139,77 @@ export default function Tareas() {
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <span className={`h-2.5 w-2.5 rounded-full ${col.dotColor}`} />
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {col.status}
-                  </h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{col.status}</h3>
                 </div>
-                <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {colTasks.length}
-                </span>
+                <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{colTasks.length}</span>
               </div>
-              {colTasks.map((task) => (
-                <motion.div
-                  key={task.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass-card rounded-lg p-4 hover:glow-primary transition-all cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <p className="text-sm font-medium group-hover:text-primary transition-colors">{task.name}</p>
-                    <div className="flex items-center gap-1 text-xs font-mono text-secondary">
-                      <Zap className="h-3 w-3" />
-                      {task.points}
+              {colTasks.map((task) => {
+                const nextStatus = getNextStatus(task.status);
+                return (
+                  <motion.div
+                    key={task.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass-card rounded-lg p-4 hover:glow-primary transition-all cursor-pointer group"
+                    onClick={() => openEdit(task)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-sm font-medium group-hover:text-primary transition-colors flex-1 min-w-0 truncate">{task.name}</p>
+                      <div className="flex items-center gap-1 text-xs font-mono text-secondary shrink-0 ml-2">
+                        <Zap className="h-3 w-3" />
+                        {task.points}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={`h-2 w-2 rounded-full ${statusDot[task.status]}`} />
-                    <span>{task.status}</span>
-                    <span className="text-border">·</span>
-                    <span>{task.assignee}</span>
-                  </div>
-                  <p className="text-[10px] font-mono text-muted-foreground mt-2">
-                    {task.project} {task.dueDate && `· Vence: ${task.dueDate}`}
-                  </p>
-                </motion.div>
-              ))}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className={`h-2 w-2 rounded-full ${statusDot[task.status]}`} />
+                      <span>{task.assignee}</span>
+                    </div>
+                    {task.clientName && (
+                      <p className="text-[10px] text-muted-foreground mt-1">Cliente: {task.clientName}</p>
+                    )}
+                    <p className="text-[10px] font-mono text-muted-foreground mt-1">
+                      {task.project} {task.dueDate && `· Vence: ${task.dueDate}`}
+                    </p>
+
+                    {/* Quick actions */}
+                    <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border/30 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => openEdit(task)} className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-muted text-muted-foreground hover:text-foreground transition-colors">
+                        <Pencil className="h-2.5 w-2.5" /> Editar
+                      </button>
+                      {nextStatus && (
+                        <button
+                          onClick={() => handleStatusChange(task.id, nextStatus)}
+                          className="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          <ArrowRight className="h-2.5 w-2.5" /> {nextStatus}
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           );
         })}
       </div>
 
-      {/* Dialog Nueva Tarea */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Dialog Crear/Editar Tarea */}
+      <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditingTask(null); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" /> Nueva Tarea
+              <Plus className="h-5 w-5 text-primary" /> {editingTask ? "Editar Tarea" : "Nueva Tarea"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Título</Label>
-              <Input
-                placeholder="Nombre de la tarea"
-                value={newTask.name}
-                onChange={(e) => setNewTask((p) => ({ ...p, name: e.target.value }))}
-              />
+              <Label>Título *</Label>
+              <Input placeholder="Nombre de la tarea" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <Label>Estado</Label>
-              <Select value={newTask.status} onValueChange={(v) => setNewTask((p) => ({ ...p, status: v as TaskStatus }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v as TaskStatus }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {columns.map((c) => (
                     <SelectItem key={c.status} value={c.status}>
@@ -160,19 +225,55 @@ export default function Tareas() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Responsable</Label>
-                <Input
-                  placeholder="Nombre"
-                  value={newTask.assignee}
-                  onChange={(e) => setNewTask((p) => ({ ...p, assignee: e.target.value }))}
-                />
+                <Select value={form.assignee || "__none__"} onValueChange={(v) => setForm((p) => ({ ...p, assignee: v === "__none__" ? "" : v }))}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin asignar</SelectItem>
+                    {users.map((u) => <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
+                <Label>Asignado por</Label>
+                <Select value={form.assignedBy || "__none__"} onValueChange={(v) => setForm((p) => ({ ...p, assignedBy: v === "__none__" ? "" : v }))}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin especificar</SelectItem>
+                    {users.map((u) => <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label>Proyecto</Label>
-                <Input
-                  placeholder="Proyecto"
-                  value={newTask.project}
-                  onChange={(e) => setNewTask((p) => ({ ...p, project: e.target.value }))}
-                />
+                <Select
+                  value={form.projectId || "__none__"}
+                  onValueChange={(v) => {
+                    if (v === "__none__") {
+                      setForm((p) => ({ ...p, project: "", projectId: "" }));
+                    } else {
+                      const proj = projects.find((pr) => pr.id === v);
+                      setForm((p) => ({ ...p, project: proj?.name ?? "", projectId: v }));
+                    }
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin proyecto</SelectItem>
+                    {projects.map((pr) => <SelectItem key={pr.id} value={pr.id}>{pr.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Cliente</Label>
+                <Select value={form.clientName || "__none__"} onValueChange={(v) => setForm((p) => ({ ...p, clientName: v === "__none__" ? "" : v }))}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin cliente</SelectItem>
+                    {clients.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -180,39 +281,25 @@ export default function Tareas() {
                 <Label>Fecha de entrega</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn("w-full justify-start text-left font-normal", !newTask.dueDate && "text-muted-foreground")}
-                    >
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !form.dueDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {newTask.dueDate ? format(newTask.dueDate, "dd/MM/yyyy") : "Seleccionar"}
+                      {form.dueDate ? format(form.dueDate, "dd/MM/yyyy") : "Seleccionar"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={newTask.dueDate}
-                      onSelect={(d) => setNewTask((p) => ({ ...p, dueDate: d }))}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
+                    <Calendar mode="single" selected={form.dueDate} onSelect={(d) => setForm((p) => ({ ...p, dueDate: d }))} initialFocus className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
               </div>
               <div className="space-y-2">
                 <Label>Puntaje</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={newTask.points}
-                  onChange={(e) => setNewTask((p) => ({ ...p, points: Number(e.target.value) }))}
-                />
+                <Input type="number" min={0} value={form.points} onChange={(e) => setForm((p) => ({ ...p, points: Number(e.target.value) }))} />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={!newTask.name.trim()}>Crear Tarea</Button>
+            <Button variant="outline" onClick={() => { setDialogOpen(false); setEditingTask(null); }}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={!form.name.trim()}>{editingTask ? "Guardar cambios" : "Crear Tarea"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

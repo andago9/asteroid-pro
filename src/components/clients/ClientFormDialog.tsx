@@ -17,6 +17,7 @@ import type { Client } from "@/lib/clients-data";
 import {
   SECTORS, CLIENT_STATUSES, CLIENT_SOURCES, CONTACT_CHANNELS, DOC_TYPES, emptyClient,
 } from "@/lib/clients-data";
+import { useSystemUsers } from "@/hooks/useSystemUsers";
 
 interface Props {
   open: boolean;
@@ -38,6 +39,7 @@ export default function ClientFormDialog({ open, onClose, onSave, initial }: Pro
   const [activeTab, setActiveTab] = useState<Tab>("basic");
   const [form, setForm] = useState(() => initial ? { ...initial } : emptyClient());
   const [tagInput, setTagInput] = useState("");
+  const { users } = useSystemUsers();
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
@@ -188,7 +190,20 @@ export default function ClientFormDialog({ open, onClose, onSave, initial }: Pro
                   </FieldRow>
                   <FieldRow cols={2}>
                     <Field label="Responsable comercial">
-                      <Input value={form.responsible} onChange={(e) => set("responsible", e.target.value)} />
+                      <Select
+                        value={form.responsible || "__none__"}
+                        onValueChange={(v) => set("responsible", v === "__none__" ? "" : v)}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Seleccionar responsable" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Sin asignar</SelectItem>
+                          {users.map((u) => (
+                            <SelectItem key={u.id} value={u.full_name}>
+                              {u.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </Field>
                     <Field label="Valor potencial" icon={<DollarSign className="h-3.5 w-3.5" />}>
                       <Input

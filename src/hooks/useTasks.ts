@@ -7,8 +7,11 @@ export interface Task {
   id: string;
   name: string;
   assignee: string;
+  assignedBy: string;
   status: TaskStatus;
   project: string;
+  projectId: string;
+  clientName: string;
   dueDate: string;
   points: number;
 }
@@ -41,12 +44,15 @@ export function useTasks() {
     queryFn: async () => {
       const { data, error } = await supabase.from("tasks").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r): Task => ({
+      return (data ?? []).map((r: any): Task => ({
         id: r.id,
         name: r.name,
         assignee: r.assignee ?? "Sin asignar",
+        assignedBy: r.assigned_by ?? "",
         status: mapStatus(r.status),
         project: r.project_name ?? "Sin proyecto",
+        projectId: r.project_id ?? "",
+        clientName: r.client_name ?? "",
         dueDate: r.due_date ?? "",
         points: r.points ?? 1,
       }));
@@ -58,11 +64,32 @@ export function useTasks() {
       const { error } = await supabase.from("tasks").insert({
         name: t.name,
         assignee: t.assignee,
+        assigned_by: t.assignedBy,
         status: localStatusToDB(t.status) as any,
         project_name: t.project,
+        project_id: t.projectId || null,
+        client_name: t.clientName,
         due_date: t.dueDate,
         points: t.points,
-      });
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+
+  const updateTask = useMutation({
+    mutationFn: async ({ id, data: t }: { id: string; data: Omit<Task, "id"> }) => {
+      const { error } = await supabase.from("tasks").update({
+        name: t.name,
+        assignee: t.assignee,
+        assigned_by: t.assignedBy,
+        status: localStatusToDB(t.status) as any,
+        project_name: t.project,
+        project_id: t.projectId || null,
+        client_name: t.clientName,
+        due_date: t.dueDate,
+        points: t.points,
+      } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
@@ -78,5 +105,13 @@ export function useTasks() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
-  return { tasks: query.data ?? [], isLoading: query.isLoading, create, updateStatus };
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+
+  return { tasks: query.data ?? [], isLoading: query.isLoading, create, updateTask, updateStatus, remove };
 }

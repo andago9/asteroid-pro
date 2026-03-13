@@ -35,7 +35,7 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <div className="flex-1 flex flex-col min-w-0 min-h-svh">
+      <div className="flex-1 flex flex-col min-w-0 min-h-svh overflow-x-hidden">
         <header className="h-14 flex items-center border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-30 px-4">
           <SidebarTrigger />
           <div className="ml-auto flex items-center gap-3">

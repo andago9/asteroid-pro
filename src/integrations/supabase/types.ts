@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts_receivable: {
+        Row: {
+          amount: number
+          client_name: string
+          concept: string
+          created_at: string
+          due_date: string
+          frequency: string
+          id: string
+          notes: string | null
+          product_service: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_name?: string
+          concept?: string
+          created_at?: string
+          due_date?: string
+          frequency?: string
+          id?: string
+          notes?: string | null
+          product_service?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string
+          concept?: string
+          created_at?: string
+          due_date?: string
+          frequency?: string
+          id?: string
+          notes?: string | null
+          product_service?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           client_id: string | null
@@ -774,7 +819,9 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assigned_by: string | null
           assignee: string | null
+          client_name: string | null
           created_at: string
           due_date: string | null
           id: string
@@ -786,7 +833,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_by?: string | null
           assignee?: string | null
+          client_name?: string | null
           created_at?: string
           due_date?: string | null
           id?: string
@@ -798,7 +847,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_by?: string | null
           assignee?: string | null
+          client_name?: string | null
           created_at?: string
           due_date?: string | null
           id?: string

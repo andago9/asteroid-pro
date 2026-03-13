@@ -23,6 +23,7 @@ import { InvoiceFormDialog } from "@/components/invoices/InvoiceFormDialog";
 import { InvoiceDetail } from "@/components/invoices/InvoiceDetail";
 import { PaymentDialog } from "@/components/invoices/PaymentDialog";
 import { useInvoices } from "@/hooks/useInvoices";
+import { CxCTab } from "@/components/facturacion/CxCTab";
 
 type SortKey = "invoiceNumber" | "client" | "issueDate" | "dueDate" | "total" | "status";
 
@@ -125,6 +126,7 @@ export default function Facturacion() {
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="invoices">Facturas</TabsTrigger>
+          <TabsTrigger value="cxc">CxC</TabsTrigger>
         </TabsList>
 
         {/* ════════════ Dashboard ════════════ */}
@@ -139,7 +141,6 @@ export default function Facturacion() {
               subtitle={overdueCount > 0 ? "Requieren seguimiento" : "Sin vencimientos"} />
           </div>
 
-          {/* Overdue alerts */}
           {overdueCount > 0 && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5 border-l-4 border-destructive">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -147,10 +148,7 @@ export default function Facturacion() {
               </h3>
               <div className="space-y-2">
                 {invoices.filter(i => i.status === "Vencida").map(inv => (
-                  <div key={inv.id}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors"
-                    onClick={() => setDetailInvoice(inv)}
-                  >
+                  <div key={inv.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => setDetailInvoice(inv)}>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-mono text-primary font-bold">{inv.invoiceNumber}</span>
                       <span className="text-sm">{inv.client}</span>
@@ -165,17 +163,13 @@ export default function Facturacion() {
             </motion.div>
           )}
 
-          {/* Recent */}
           <div className="glass-card rounded-xl p-5">
             <h3 className="text-sm font-semibold mb-3">Facturas Recientes</h3>
             <div className="space-y-2">
               {invoices.slice(0, 5).map(inv => {
                 const total = calcInvoiceTotals(inv.items, inv.discount).total;
                 return (
-                  <div key={inv.id}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors"
-                    onClick={() => setDetailInvoice(inv)}
-                  >
+                  <div key={inv.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 hover:bg-muted/40 cursor-pointer transition-colors" onClick={() => setDetailInvoice(inv)}>
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="text-xs font-mono text-primary font-bold shrink-0">{inv.invoiceNumber}</span>
                       <span className="text-sm truncate">{inv.client}</span>
@@ -279,6 +273,11 @@ export default function Facturacion() {
               </TableBody>
             </Table>
           </div>
+        </TabsContent>
+
+        {/* ════════════ CxC ════════════ */}
+        <TabsContent value="cxc" className="mt-4">
+          <CxCTab />
         </TabsContent>
       </Tabs>
 

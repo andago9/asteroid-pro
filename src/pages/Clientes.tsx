@@ -128,7 +128,7 @@ export default function Clientes() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar cliente..."
-              className="bg-transparent border-none outline-none text-xs w-44 placeholder:text-muted-foreground"
+              className="bg-transparent border-none outline-none text-xs w-44 placeholder:text-muted-foreground text-foreground"
             />
             {search && (
               <button onClick={() => setSearch("")} className="text-muted-foreground hover:text-foreground">
@@ -245,22 +245,22 @@ export default function Clientes() {
                     className="border-b border-border/20 hover:bg-muted/30 transition-colors cursor-pointer"
                   >
                     <td className="p-4">
-                      <p className="font-medium truncate max-w-[180px]">{c.name}</p>
+                      <p className="font-medium truncate max-w-[180px] text-foreground">{c.name}</p>
                     </td>
                     <td className="p-4">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground/80 font-medium">
                         {c.sector}
                       </span>
                     </td>
-                    <td className="p-4 text-xs">{c.city}</td>
+                    <td className="p-4 text-xs text-foreground/80">{c.city}</td>
                     <td className="p-4">
-                      <p className="text-xs">{c.contactPerson}</p>
+                      <p className="text-xs text-foreground/90">{c.contactPerson}</p>
                       <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
                         <Mail className="h-2.5 w-2.5" /> {c.email}
                       </p>
                     </td>
                     <td className="p-4">
-                      <p className="text-xs flex items-center gap-1">
+                      <p className="text-xs flex items-center gap-1 text-foreground/80">
                         <Phone className="h-3 w-3 text-muted-foreground" /> {c.phone}
                       </p>
                     </td>
@@ -269,7 +269,7 @@ export default function Clientes() {
                         {c.status}
                       </span>
                     </td>
-                    <td className="p-4 text-xs font-mono text-muted-foreground">{formatDate(c.createdAt)}</td>
+                    <td className="p-4 text-xs font-mono text-foreground/60">{formatDate(c.createdAt)}</td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <button

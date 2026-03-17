@@ -7,6 +7,16 @@ export interface Profile {
   full_name: string;
   avatar_url: string;
   status: "disponible" | "ocupado" | "ausente";
+  nombre: string;
+  apellido: string;
+  celular: string;
+  github: string;
+  linkedin: string;
+  ciudad: string;
+  pais: string;
+  direccion: string;
+  cargo: string;
+  estudios: string;
   created_at: string;
   updated_at: string;
 }
@@ -31,7 +41,7 @@ export function useProfile() {
   });
 
   const updateProfile = useMutation({
-    mutationFn: async (updates: Partial<Pick<Profile, "full_name" | "avatar_url" | "status">>) => {
+    mutationFn: async (updates: Partial<Pick<Profile, "full_name" | "avatar_url" | "status" | "nombre" | "apellido" | "celular" | "github" | "linkedin" | "ciudad" | "pais" | "direccion" | "cargo" | "estudios">>) => {
       if (!user) throw new Error("No user");
       const { error } = await supabase
         .from("profiles")

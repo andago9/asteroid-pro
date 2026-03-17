@@ -218,16 +218,6 @@ function AuthForm() {
                   ¿Olvidaste tu contraseña?
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsForgot(false);
-                  setIsLogin(!isLogin);
-                }}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {isLogin ? "¿No tienes cuenta? Regístrate" : "¿Ya tienes cuenta? Inicia sesión"}
-              </button>
             </div>
           </CardContent>
         </Card>
